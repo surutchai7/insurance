@@ -1363,6 +1363,15 @@
         <span class="material-icons">settings</span>
         ตั้งค่า
       </button>
+      <!-- New Navigation Buttons -->
+      <button class="nav-btn" data-page="installment">
+        <span class="material-icons">payments</span>
+        ติดตามผ่อน
+      </button>
+      <button class="nav-btn" data-page="renewal">
+        <span class="material-icons">autorenew</span>
+        ต่ออายุ
+      </button>
     </div>
     
     <!-- Dashboard Page -->
@@ -2809,6 +2818,12 @@
         case 'settings':
           // Settings loaded when connection tested
           break;
+        case 'installment':
+          loadInstallmentTracking();
+          break;
+        case 'renewal':
+          loadRenewalTracking();
+          break;
       }
     }
     
@@ -3542,6 +3557,15 @@
       const totalPremium = workOrderItems.reduce((sum, item) => sum + (parseFloat(item.premium) || 0), 0);
       const totalElement = document.getElementById('total-premium');
       if (totalElement) totalElement.textContent = formatNumber(totalPremium);
+      
+      // Re-calculate balance after discount
+      const discountInput = document.getElementById('discount-amount');
+      const balanceElement   = document.getElementById('balance-premium');
+      const discountValue = discountInput && discountInput.value ? parseFloat(discountInput.value) : 0;
+      if (balanceElement) {
+        const balance = Math.max(totalPremium - discountValue, 0);
+        balanceElement.value = formatNumber(balance);
+      }
     }
     
     async function saveWorkOrder() {
@@ -5676,6 +5700,7 @@ ${additionalMessage}
             <td>฿${formatNumber(amountPerInstallment)}</td>
             <td>${formatDate(dueDate)}</td>
             <td><span class="badge badge-warning">รอชำระ</span></td>
+            <td><button class="btn btn-success btn-sm" onclick="markInstallmentPaid(${i + 1})"><span class="material-icons">check_circle</span></button></td>
           </tr>
         `;
       }
