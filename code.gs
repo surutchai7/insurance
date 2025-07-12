@@ -2833,3 +2833,33 @@ function searchVehicles(searchText) {
     };
   }, { success: false, data: [], count: 0, error: 'Search failed' });
 }
+
+// ==================== PUBLIC WRAPPER FUNCTIONS FOR FRONTEND ====================
+/**
+ * markInstallmentPaid
+ * Frontend helper – simply calls payInstallment with provided installmentId & amount.
+ * @param {{installmentId:string, amount:number, referenceNumber?:string, bank?:string, notes?:string}} data 
+ */
+function markInstallmentPaid(data) {
+  return safeExecute('markInstallmentPaid', function() {
+    if (!data || !data.installmentId || !data.amount) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+    // Re-use main logic in payInstallment
+    return payInstallment({
+      installmentId: data.installmentId,
+      amount: data.amount,
+      referenceNumber: data.referenceNumber || '',
+      bank: data.bank || '',
+      notes: data.notes || ''
+    });
+  });
+}
+
+/**
+ * loadInstallmentTracking
+ * Returns installments due in current month (wrapper for getInstallmentsDueThisMonth)
+ */
+function loadInstallmentTracking() {
+  return getInstallmentsDueThisMonth();
+}
