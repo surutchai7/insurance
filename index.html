@@ -2176,6 +2176,9 @@
       'อื่นๆ': 'อื่นๆ'
     };
     
+    // ==================== GLOBAL VARIABLES FOR INSTALLMENT EDITING ====================
+    let installmentPlanData = [];
+    
     // ==================== BASIC UTILITY FUNCTIONS ====================
     function showLoading(message = 'กำลังดำเนินการ...') {
       try {
@@ -3612,6 +3615,10 @@
       const woNumberInput = document.getElementById('wo-number');
       const workOrderNumber = woNumberInput ? woNumberInput.value : null;
       
+      const discountInput = document.getElementById('discount-amount');
+      const discountValue = discountInput && discountInput.value ? parseFloat(discountInput.value) : 0;
+      const balanceAmount = validItems.reduce((sum, item) => sum + item.premium, 0) - discountValue;
+      
       const data = {
         id: isEditing ? editWorkOrderId.value : null,
         workOrderNumber: isEditing ? null : workOrderNumber,
@@ -3626,7 +3633,11 @@
         // Payment information
         paymentType: paymentType.value,
         numberOfInstallments: paymentType.value === 'ผ่อนชำระ' ? installments.value : null,
-        paymentStartDate: document.getElementById('wo-payment-date')?.value || new Date()
+        installmentPlan: paymentType.value === 'ผ่อนชำระ' ? installmentPlanData : null,
+        paymentStartDate: document.getElementById('wo-payment-date')?.value || new Date(),
+        discount: discountValue,
+        balanceAmount: balanceAmount,
+        paymentStatus: paymentType.value === 'ผ่อนชำระ' ? 'อยู่ระหว่างชำระผ่อน' : 'ชำระเต็มจำนวน'
       };
       
       try {
@@ -5688,17 +5699,28 @@ ${additionalMessage}
       const paymentDate = document.getElementById('wo-payment-date');
       const startDate = paymentDate && paymentDate.value ? new Date(paymentDate.value) : new Date();
       
+      // Build or reset global plan array
+      installmentPlanData = [];
+      
       // Generate installment rows
       let installmentHtml = '';
       for (let i = 0; i < numberOfInstallments; i++) {
         const dueDate = new Date(startDate);
         dueDate.setMonth(dueDate.getMonth() + i);
-        
+        const isoDate = dueDate.toISOString().split('T')[0];
+        const amount = (i === 0) ? amountPerInstallment : amountPerInstallment;
+        installmentPlanData.push({
+          installmentNumber: i + 1,
+          totalInstallments: numberOfInstallments,
+          amount: amount,
+          dueDate: isoDate,
+          status: 'รอชำระ'
+        });
         installmentHtml += `
           <tr>
             <td>งวดที่ ${i + 1}</td>
-            <td>฿${formatNumber(amountPerInstallment)}</td>
-            <td>${formatDate(dueDate)}</td>
+            <td>${i === 0 ? `<input type="number" class="form-control" value="${amount}" min="0" step="0.01" onchange="updateFirstInstallmentAmount(this.value)">` : `฿${formatNumber(amount)}`}</td>
+            <td><input type="date" class="form-control" value="${isoDate}" onchange="updateInstallmentDueDate(${i}, this.value)"></td>
             <td><span class="badge badge-warning">รอชำระ</span></td>
             <td><button class="btn btn-success btn-sm" onclick="markInstallmentPaid(${i + 1})"><span class="material-icons">check_circle</span></button></td>
           </tr>
@@ -5707,6 +5729,42 @@ ${additionalMessage}
       
       installmentBody.innerHTML = installmentHtml;
       installmentPlan.style.display = 'block';
+    }
+    
+    function updateFirstInstallmentAmount(newAmount) {
+      const amount0 = parseFloat(newAmount) || 0;
+      if (!installmentPlanData.length) return;
+      const totalPremium = workOrderItems.reduce((sum, item) => sum + (parseFloat(item.premium) || 0), 0);
+      const remaining = Math.max(totalPremium - amount0, 0);
+      const otherCount = installmentPlanData.length - 1;
+      const per = otherCount > 0 ? Math.ceil(remaining / otherCount) : 0;
+      installmentPlanData[0].amount = amount0;
+      for (let i = 1; i < installmentPlanData.length; i++) {
+        installmentPlanData[i].amount = per;
+      }
+      renderInstallmentPlan();
+    }
+    
+    function updateInstallmentDueDate(index, dateStr) {
+      if (!installmentPlanData[index]) return;
+      installmentPlanData[index].dueDate = dateStr;
+    }
+    
+    function renderInstallmentPlan() {
+      const installmentBody = document.getElementById('installment-plan-body');
+      if (!installmentBody) return;
+      let html = '';
+      installmentPlanData.forEach((inst, idx) => {
+        html += `
+          <tr>
+            <td>งวดที่ ${inst.installmentNumber}</td>
+            <td>${idx === 0 ? `<input type="number" class="form-control" value="${inst.amount}" min="0" step="0.01" onchange="updateFirstInstallmentAmount(this.value)">` : `฿${formatNumber(inst.amount)}`}</td>
+            <td><input type="date" class="form-control" value="${inst.dueDate}" onchange="updateInstallmentDueDate(${idx}, this.value)"></td>
+            <td><span class="badge ${inst.status === 'ชำระแล้ว' ? 'badge-success' : 'badge-warning'}">${inst.status}</span></td>
+            <td><button class="btn btn-success btn-sm" onclick="markInstallmentPaid(${inst.installmentNumber})"><span class="material-icons">check_circle</span></button></td>
+          </tr>`;
+      });
+      installmentBody.innerHTML = html;
     }
     
     function openPaymentModal(workOrderId) {
@@ -6146,6 +6204,12 @@ ${additionalMessage}
     window.viewPaymentHistory = viewPaymentHistory;
     window.handlePaymentTypeChange = handlePaymentTypeChange;
     window.generateInstallmentPlan = generateInstallmentPlan;
+    window.updateFirstInstallmentAmount = updateFirstInstallmentAmount;
+    window.updateInstallmentDueDate = updateInstallmentDueDate;
+    window.renderInstallmentPlan = renderInstallmentPlan;
+    window.loadInstallmentTracking = loadInstallmentTracking;
+    window.loadRenewalTracking = loadRenewalTracking;
+    window.markInstallmentPaid = markInstallmentPaid;
     
     console.log('All functions registered globally');
   </script>
