@@ -466,16 +466,25 @@ function getPaymentHistory(workOrderId) {
     const paymentSheet = getOrCreateSheet('การชำระเงิน');
     const lastRow = paymentSheet.getLastRow();
     
+    console.log('Getting payment history for:', workOrderId, 'Last row:', lastRow);
+    
     if (lastRow <= 1) return [];
     
     const values = paymentSheet.getRange(2, 1, lastRow - 1, 11).getValues();
     
     const payments = values
-      .filter(row => row[1] === workOrderId)
+      .filter(row => {
+        const rowWorkOrderId = String(row[1] || '');
+        const matches = rowWorkOrderId === String(workOrderId);
+        if (matches) {
+          console.log('Found payment:', row[0], 'Amount:', row[4]);
+        }
+        return matches;
+      })
       .map(row => ({
         paymentId: String(row[0] || ''),
         workOrderId: String(row[1] || ''),
-        paymentDate: row[2] || '',
+        paymentDate: row[2] ? (row[2] instanceof Date ? row[2].toISOString().split('T')[0] : row[2]) : '',
         paymentType: String(row[3] || ''),
         amount: parseFloat(row[4]) || 0,
         referenceNumber: String(row[5] || ''),
@@ -486,8 +495,9 @@ function getPaymentHistory(workOrderId) {
         installmentNumber: row[10] || ''
       }));
     
+    console.log('Found', payments.length, 'payments for work order', workOrderId);
     return payments;
-  });
+  }, []);
 }
 
 function getInstallmentPlan(workOrderId) {
@@ -900,6 +910,115 @@ function getRenewalsDueThisMonth() {
       .filter(row => {
         const expiryDate = new Date(row[5]);
         return expiryDate >= today && expiryDate <= nextMonth;
+      })
+      .map(row => ({
+        trackingId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        customerId: String(row[2] || ''),
+        customerName: String(row[3] || ''),
+        insuranceType: String(row[4] || ''),
+        expiryDate: row[5] || '',
+        status: String(row[6] || ''),
+        notificationDate: row[7] || '',
+        renewalOrderDate: row[8] || '',
+        newPolicyNumber: String(row[9] || ''),
+        notes: String(row[10] || ''),
+        trackedBy: String(row[11] || '')
+      }));
+    
+    return dueRenewals;
+  });
+}
+
+// Get installments with month/year filter
+function getInstallmentsByMonthYear(month, year) {
+  return safeExecute('getInstallmentsByMonthYear', function() {
+    const trackingSheet = getOrCreateSheet('ติดตามการผ่อนชำระ');
+    const lastRow = trackingSheet.getLastRow();
+    
+    if (lastRow <= 1) return [];
+    
+    const values = trackingSheet.getRange(2, 1, lastRow - 1, 11).getValues();
+    const targetMonth = parseInt(month) - 1; // JavaScript months are 0-based
+    const targetYear = parseInt(year);
+    
+    const dueInstallments = values
+      .filter(row => {
+        const dueDate = new Date(row[6]);
+        return dueDate.getMonth() === targetMonth && dueDate.getFullYear() === targetYear;
+      })
+      .map(row => ({
+        trackingId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        customerId: String(row[2] || ''),
+        customerName: String(row[3] || ''),
+        installmentNumber: row[4] || 0,
+        amount: parseFloat(row[5]) || 0,
+        dueDate: row[6] || '',
+        status: String(row[7] || ''),
+        paymentDate: row[8] || '',
+        notes: String(row[9] || ''),
+        trackedBy: String(row[10] || ''),
+        totalInstallments: 0 // Will be filled from installment plan
+      }));
+    
+    // Get total installments from installment plan
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const installmentData = installmentSheet.getDataRange().getValues();
+    
+    dueInstallments.forEach(inst => {
+      for (let i = 1; i < installmentData.length; i++) {
+        if (installmentData[i][1] === inst.workOrderId && installmentData[i][2] === inst.installmentNumber) {
+          inst.totalInstallments = installmentData[i][3] || 0;
+          break;
+        }
+      }
+    });
+    
+    return dueInstallments;
+  });
+}
+
+// Get renewals with month/year filter
+function getRenewalsByMonthYear(month, year) {
+  return safeExecute('getRenewalsByMonthYear', function() {
+    const trackingSheet = getOrCreateSheet('ติดตามการต่ออายุ');
+    const lastRow = trackingSheet.getLastRow();
+    
+    if (lastRow <= 1) {
+      // Check work orders directly
+      const workOrders = getWorkOrderList();
+      const targetMonth = parseInt(month) - 1;
+      const targetYear = parseInt(year);
+      
+      const dueRenewals = workOrders
+        .filter(wo => {
+          if (!wo.endDate || wo.status === 'ยกเลิก') return false;
+          const endDate = new Date(wo.endDate);
+          return endDate.getMonth() === targetMonth && endDate.getFullYear() === targetYear;
+        })
+        .map(wo => ({
+          workOrderId: wo.id,
+          customerId: wo.customerId,
+          customerName: wo.customerName,
+          insuranceType: wo.insuranceType,
+          expiryDate: wo.endDate,
+          status: RENEWAL_STATUS.PENDING,
+          policyNumber: wo.policyNumber
+        }));
+      
+      return dueRenewals;
+    }
+    
+    // Get from tracking sheet
+    const values = trackingSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+    const targetMonth = parseInt(month) - 1;
+    const targetYear = parseInt(year);
+    
+    const dueRenewals = values
+      .filter(row => {
+        const expiryDate = new Date(row[5]);
+        return expiryDate.getMonth() === targetMonth && expiryDate.getFullYear() === targetYear;
       })
       .map(row => ({
         trackingId: String(row[0] || ''),
@@ -1681,8 +1800,8 @@ function saveWorkOrder(data) {
           totalAmount: actualAmount, // ใช้ยอดหลังหักส่วนลด
           numberOfInstallments: data.numberOfInstallments,
           startDate: data.paymentStartDate || new Date(),
-          downPayment: data.downPayment || 0,
-          customDates: data.installmentDates || []
+          downPayment: data.installmentPlan && data.installmentPlan[0] ? data.installmentPlan[0].amount : 0,
+          customDates: data.installmentPlan ? data.installmentPlan.map(p => p.dueDate) : []
         };
         createInstallmentPlan(installmentData);
       } else {
