@@ -1136,6 +1136,64 @@
       border-top: 1px solid var(--border-color);
     }
     
+    /* Print styles for work order */
+    @media print {
+      body {
+        margin: 0;
+        font-family: 'Sarabun', sans-serif;
+      }
+      
+      .no-print {
+        display: none !important;
+      }
+      
+      .page-break {
+        page-break-before: always;
+      }
+      
+      /* Force single page for work order */
+      .print-container {
+        page-break-inside: avoid;
+        width: 100%;
+        max-width: 210mm;
+        margin: 0 auto;
+      }
+      
+      /* Reduce font sizes for print */
+      .print-container h1 {
+        font-size: 22px !important;
+      }
+      
+      .print-container h3 {
+        font-size: 16px !important;
+      }
+      
+      .print-container table {
+        font-size: 11px !important;
+      }
+      
+      .print-container .info-item {
+        font-size: 12px !important;
+      }
+      
+      /* Compact sections for print */
+      .print-container .section {
+        margin-bottom: 10px !important;
+        padding: 10px !important;
+      }
+      
+      .print-container .header {
+        margin-bottom: 15px !important;
+        padding-bottom: 10px !important;
+      }
+      
+      /* Reduce table padding */
+      .print-container th,
+      .print-container td {
+        padding: 4px !important;
+      }
+    }
+    
     /* Utility Classes */
     .text-right { text-align: right; }
     .text-center { text-align: center; }
@@ -1441,6 +1499,7 @@
                   <th>รหัสรถ</th>
                   <th>ทะเบียนรถ</th>
                   <th>ยี่ห้อ/รุ่น</th>
+                  <th>สี</th>
                   <th>ปีรถ</th>
                   <th>เจ้าของ</th>
                   <th>การกระทำ</th>
@@ -1448,7 +1507,7 @@
               </thead>
               <tbody id="vehicle-tbody">
                 <tr>
-                  <td colspan="6" style="text-align: center; color: var(--text-secondary);">กำลังโหลดข้อมูล...</td>
+                  <td colspan="7" style="text-align: center; color: var(--text-secondary);">กำลังโหลดข้อมูล...</td>
                 </tr>
               </tbody>
             </table>
@@ -1598,6 +1657,81 @@
                 <span class="material-icons">add</span>
                 เพิ่มรายการ
               </button>
+              
+              <!-- Payment Section -->
+              <h4 style="margin-top: 20px; margin-bottom: 10px;">ข้อมูลการชำระเงิน</h4>
+              <div class="card" style="background-color: var(--bg-color); padding: 15px;">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>ประเภทการชำระเงิน *</label>
+                    <select class="form-control" id="wo-payment-type" required>
+                      <option value="">-- เลือกประเภท --</option>
+                      <option value="โอนเงิน">โอนเงิน</option>
+                      <option value="บัตรเครดิต">บัตรเครดิต</option>
+                      <option value="เงินสด">เงินสด</option>
+                      <option value="ผ่อนชำระ">ผ่อนชำระ</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="installment-group" style="display: none;">
+                    <label>จำนวนงวด</label>
+                    <select class="form-control" id="wo-installments">
+                      <option value="">-- เลือกจำนวนงวด --</option>
+                      <option value="2">2 งวด</option>
+                      <option value="3">3 งวด</option>
+                      <option value="4">4 งวด</option>
+                      <option value="5">5 งวด</option>
+                      <option value="6">6 งวด</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="payment-reference-group">
+                    <label>เลขที่อ้างอิง/เลขที่บัตร</label>
+                    <input type="text" class="form-control" id="wo-payment-reference" placeholder="เลขที่อ้างอิงการโอน/4 หลักท้ายบัตร">
+                  </div>
+                  <div class="form-group" id="payment-date-group">
+                    <label>วันที่ชำระเงิน</label>
+                    <input type="date" class="form-control" id="wo-payment-date">
+                  </div>
+                  <div class="form-group" id="bank-group" style="display: none;">
+                    <label>ธนาคาร</label>
+                    <select class="form-control" id="wo-bank">
+                      <option value="">-- เลือกธนาคาร --</option>
+                      <option value="กรุงเทพ">ธนาคารกรุงเทพ</option>
+                      <option value="กสิกรไทย">ธนาคารกสิกรไทย</option>
+                      <option value="ไทยพาณิชย์">ธนาคารไทยพาณิชย์</option>
+                      <option value="กรุงไทย">ธนาคารกรุงไทย</option>
+                      <option value="ทหารไทยธนชาต">ธนาคารทหารไทยธนชาต</option>
+                      <option value="กรุงศรี">ธนาคารกรุงศรี</option>
+                      <option value="ออมสิน">ธนาคารออมสิน</option>
+                      <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <!-- Installment Plan Display -->
+                <div id="installment-plan" style="display: none; margin-top: 15px;">
+                  <h5>แผนการผ่อนชำระ</h5>
+                  <div class="table-container">
+                    <table class="items-table-compact">
+                      <thead>
+                        <tr>
+                          <th>งวดที่</th>
+                          <th>จำนวนเงิน</th>
+                          <th>วันครบกำหนด</th>
+                          <th>สถานะ</th>
+                        </tr>
+                      </thead>
+                      <tbody id="installment-plan-body">
+                        <!-- Installment rows will be generated here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>หมายเหตุการชำระเงิน</label>
+                  <textarea class="form-control" id="wo-payment-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                </div>
+              </div>
               
               <div style="text-align: center; margin-top: 20px;">
                 <button type="submit" class="btn btn-primary">
@@ -2366,6 +2500,28 @@
         initSystemBtn.addEventListener('click', initializeSystemManually);
       }
       
+      // Payment type change handler
+      const paymentTypeSelect = document.getElementById('wo-payment-type');
+      if (paymentTypeSelect) {
+        paymentTypeSelect.addEventListener('change', handlePaymentTypeChange);
+      }
+      
+      // Installments change handler
+      const installmentsSelect = document.getElementById('wo-installments');
+      if (installmentsSelect) {
+        installmentsSelect.addEventListener('change', generateInstallmentPlan);
+      }
+      
+      // Payment date auto-fill
+      const paymentDateInput = document.getElementById('wo-payment-date');
+      if (paymentDateInput) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        paymentDateInput.value = `${year}-${month}-${day}`;
+      }
+      
       // Owner search buttons
       const vehicleOwnerBtn = document.getElementById('vehicle-owner-btn');
       if (vehicleOwnerBtn) {
@@ -2849,7 +3005,7 @@
       if (!tbody) return;
       
       if (vehicleData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">ยังไม่มีข้อมูลรถ</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">ยังไม่มีข้อมูลรถ</td></tr>';
       } else {
         tbody.innerHTML = vehicleData.map(vehicle => {
           const owner = customers.find(c => c.id === vehicle.customerId);
@@ -2858,6 +3014,7 @@
               <td>${vehicle.id}</td>
               <td>${vehicle.licensePlate}</td>
               <td>${vehicle.brand || '-'} ${vehicle.model || ''}</td>
+              <td>${vehicle.color || '-'}</td>
               <td>${vehicle.year || '-'}</td>
               <td>${owner ? owner.name : '-'}</td>
               <td>
@@ -3113,6 +3270,11 @@
         asset.innerHTML = '<option value="">-- เลือกทรัพย์สิน --</option>';
       }
       
+      // Reset payment section
+      const paymentType = document.getElementById('wo-payment-type');
+      if (paymentType) paymentType.value = '';
+      handlePaymentTypeChange(); // Reset payment fields visibility
+      
       // Set current date
       const dateInput = document.getElementById('wo-date');
       if (dateInput) {
@@ -3121,6 +3283,16 @@
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         dateInput.value = `${year}-${month}-${day}`;
+      }
+      
+      // Set payment date to today
+      const paymentDateInput = document.getElementById('wo-payment-date');
+      if (paymentDateInput) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        paymentDateInput.value = `${year}-${month}-${day}`;
       }
       
       // Get new work order number
@@ -3154,7 +3326,7 @@
       }
     }
     
-    // ==================== อัพเดต updateWorkOrderTable สำหรับปุ่มแจ้งงาน ====================
+    // ==================== อัพเดต updateWorkOrderTable สำหรับปุ่มแจ้งงานและโคลน ====================
     function updateWorkOrderTable(workOrderData) {
       const tbody = document.getElementById('workorder-tbody');
       if (!tbody) return;
@@ -3168,7 +3340,10 @@
             <td>${formatDate(wo.createdDate)}</td>
             <td title="${wo.customerName}">${wo.customerName.length > 15 ? wo.customerName.substring(0, 15) + '...' : wo.customerName}</td>
             <td>฿${formatNumber(wo.premium)}</td>
-            <td><span class="badge ${getStatusBadgeClass(wo.status)}" style="font-size: 10px;">${wo.status}</span></td>
+            <td>
+              <span class="badge ${getStatusBadgeClass(wo.status)}" style="font-size: 10px;">${wo.status}</span>
+              ${wo.paymentStatus ? `<br><span class="badge ${getPaymentStatusBadgeClass(wo.paymentStatus)}" style="font-size: 10px;">${wo.paymentStatus}</span>` : ''}
+            </td>
             <td>
               <div class="table-actions">
                 <button class="btn btn-sm btn-primary" onclick="viewWorkOrderDetails('${wo.id}')" title="ดู">
@@ -3177,9 +3352,17 @@
                 <button class="btn btn-sm btn-warning" onclick="editWorkOrder('${wo.id}')" title="แก้ไข">
                   <span class="material-icons">edit</span>
                 </button>
+                <button class="btn btn-sm btn-success" onclick="cloneWorkOrder('${wo.id}')" title="โคลน">
+                  <span class="material-icons">content_copy</span>
+                </button>
                 <button class="btn btn-sm btn-info" onclick="prepareEmailNotification('${wo.id}')" title="แจ้งงาน">
                   <span class="material-icons">email</span>
                 </button>
+                ${wo.paymentStatus !== 'ชำระเต็มจำนวน' ? `
+                  <button class="btn btn-sm btn-secondary" onclick="openPaymentModal('${wo.id}')" title="ชำระเงิน">
+                    <span class="material-icons">payment</span>
+                  </button>
+                ` : ''}
                 ${wo.status !== 'ยกเลิก' ? `
                   <button class="btn btn-sm btn-danger" onclick="confirmCancel('${wo.id}')" title="ยกเลิก">
                     <span class="material-icons">cancel</span>
@@ -3373,6 +3556,19 @@
         return;
       }
       
+      const paymentType = document.getElementById('wo-payment-type');
+      if (!paymentType || !paymentType.value) {
+        showToast('กรุณาเลือกประเภทการชำระเงิน', 'warning');
+        return;
+      }
+      
+      // Validate installments if payment type is installment
+      const installments = document.getElementById('wo-installments');
+      if (paymentType.value === 'ผ่อนชำระ' && (!installments || !installments.value)) {
+        showToast('กรุณาเลือกจำนวนงวด', 'warning');
+        return;
+      }
+      
       // Validate items
       const validItems = workOrderItems.filter(item => item.serviceType && item.premium > 0);
       if (validItems.length === 0) {
@@ -3402,7 +3598,11 @@
         items: validItems,
         startDate: startDates.length > 0 ? startDates.sort()[0] : '',
         endDate: endDates.length > 0 ? endDates.sort().reverse()[0] : '',
-        status: isEditing ? undefined : 'แจ้งงานแล้ว'
+        status: isEditing ? undefined : 'แจ้งงานแล้ว',
+        // Payment information
+        paymentType: paymentType.value,
+        numberOfInstallments: paymentType.value === 'ผ่อนชำระ' ? installments.value : null,
+        paymentStartDate: document.getElementById('wo-payment-date')?.value || new Date()
       };
       
       try {
@@ -3411,6 +3611,21 @@
         const result = await callGoogleScript('saveWorkOrder', data);
         
         if (result && result.success) {
+          // Save payment information if not editing and payment type is not installment
+          if (!isEditing && paymentType.value !== 'ผ่อนชำระ') {
+            const paymentData = {
+              workOrderId: result.workOrderId,
+              amount: validItems.reduce((sum, item) => sum + item.premium, 0),
+              paymentType: paymentType.value,
+              referenceNumber: document.getElementById('wo-payment-reference')?.value || '',
+              bank: document.getElementById('wo-bank')?.value || '',
+              notes: document.getElementById('wo-payment-notes')?.value || ''
+            };
+            
+            // Save payment record
+            await callGoogleScript('savePayment', paymentData);
+          }
+          
           showToast(result.message, 'success');
           
           // Clear edit mode
@@ -3942,6 +4157,35 @@
       }
     }
     
+    // ==================== CLONE WORK ORDER FUNCTION ====================
+    async function cloneWorkOrder(workOrderId) {
+      try {
+        showLoading('กำลังโคลนใบงาน...');
+        
+        const result = await callGoogleScript('cloneWorkOrder', workOrderId);
+        
+        if (result && result.success) {
+          showToast('โคลนใบงานสำเร็จ', 'success');
+          
+          // Switch to work order page and edit the cloned work order
+          showPage('workorder');
+          
+          // Wait a bit for the page to load
+          setTimeout(() => {
+            editWorkOrder(result.workOrderId);
+          }, 500);
+        } else {
+          throw new Error(result?.message || 'Clone failed');
+        }
+        
+        hideLoading();
+      } catch (error) {
+        hideLoading();
+        console.error('Error cloning work order:', error);
+        showToast(`ไม่สามารถโคลนใบงานได้: ${error.message}`, 'error');
+      }
+    }
+    
     async function viewWorkOrderDetails(workOrderId) {
       try {
         showLoading('กำลังโหลดรายละเอียด...');
@@ -4074,6 +4318,12 @@
                 <label>เบี้ยประกันรวม:</label>
                 <p><strong>฿${formatNumber(totalPremium)}</strong></p>
               </div>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-info btn-sm" onclick="viewPaymentHistory('${workOrderId}')">
+                <span class="material-icons">history</span>
+                ดูประวัติการชำระเงิน
+              </button>
             </div>
           </div>
         `;
@@ -4374,6 +4624,7 @@
         
         // Get asset details (vehicle or property)
         let assetDetails = null;
+        let chassisNumber = '';
         if (workOrder.propertyId) {
           if (workOrder.propertyId.startsWith('VEH')) {
             const vehicle = vehicles.find(v => v.id === workOrder.propertyId);
@@ -4382,6 +4633,7 @@
                 type: 'vehicle',
                 data: vehicle
               };
+              chassisNumber = vehicle.chassisNumber || '';
             }
           } else {
             const property = properties.find(p => p.id === workOrder.propertyId);
@@ -4401,7 +4653,8 @@
           workOrder: workOrder,
           customer: customer,
           items: items,
-          assetDetails: assetDetails
+          assetDetails: assetDetails,
+          chassisNumber: chassisNumber
         });
         
       } catch (error) {
@@ -4412,7 +4665,7 @@
     }
     
     function showEmailModal(data) {
-      const { workOrder, customer, items, assetDetails } = data;
+      const { workOrder, customer, items, assetDetails, chassisNumber } = data;
       
       // Get license plate from asset details
       let licensePlate = '';
@@ -4470,6 +4723,14 @@
 `;
           });
         }
+      }
+
+      // Add chassis number to email content if available
+      if (chassisNumber) {
+        emailContent += `
+        
+หมายเหตุ: เลขตัวถัง ${chassisNumber}
+`;
       }
 
       // Create modal content with license plate in subject
@@ -4778,7 +5039,7 @@ ${additionalMessage}
           }
         }
         
-        // Create print content
+        // Create print content - ปรับแต่งให้อยู่ในหน้าเดียว
         let printContent = `
           <!DOCTYPE html>
           <html>
@@ -4786,76 +5047,96 @@ ${additionalMessage}
             <meta charset="UTF-8">
             <title>ใบงาน ${workOrderId}</title>
             <style>
-              @page { size: A4; margin: 15mm; }
+              @page { 
+                size: A4; 
+                margin: 10mm;
+              }
               @media print {
-                body { margin: 0; font-family: 'Sarabun', sans-serif; }
+                body { 
+                  margin: 0; 
+                  font-family: 'Sarabun', sans-serif;
+                  font-size: 12px;
+                }
                 .no-print { display: none !important; }
                 .page-break { page-break-before: always; }
               }
               body {
                 font-family: 'Sarabun', sans-serif;
-                font-size: 14px;
-                line-height: 1.6;
+                font-size: 12px;
+                line-height: 1.4;
                 color: #333;
+              }
+              .print-container {
+                page-break-inside: avoid;
+                width: 100%;
+                max-width: 210mm;
+                margin: 0 auto;
               }
               .header {
                 text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 15px;
                 border-bottom: 2px solid #2c3e50;
-                padding-bottom: 20px;
+                padding-bottom: 10px;
               }
               .header h1 {
                 color: #2c3e50;
                 margin: 0;
-                font-size: 28px;
+                font-size: 20px;
               }
               .header p {
-                margin: 5px 0;
+                margin: 3px 0;
                 color: #666;
+                font-size: 11px;
               }
               .section {
-                margin-bottom: 25px;
+                margin-bottom: 10px;
                 background: #f9f9f9;
-                padding: 15px;
-                border-radius: 5px;
+                padding: 8px;
+                border-radius: 3px;
               }
               .section h3 {
                 color: #2c3e50;
                 margin-top: 0;
+                margin-bottom: 5px;
+                font-size: 14px;
                 border-bottom: 1px solid #ddd;
-                padding-bottom: 10px;
+                padding-bottom: 3px;
               }
               .info-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
+                gap: 10px;
               }
               .info-item {
-                margin-bottom: 10px;
+                margin-bottom: 3px;
               }
               .info-item label {
                 font-weight: bold;
                 color: #555;
                 display: inline-block;
-                min-width: 120px;
+                min-width: 100px;
+                font-size: 11px;
               }
               .info-item span {
                 color: #333;
+                font-size: 11px;
               }
               table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 10px;
+                margin-top: 5px;
+                font-size: 10px;
               }
               th, td {
                 border: 1px solid #ddd;
-                padding: 10px;
+                padding: 4px;
                 text-align: left;
               }
               th {
                 background-color: #2c3e50;
                 color: white;
                 font-weight: bold;
+                font-size: 10px;
               }
               tr:nth-child(even) {
                 background-color: #f9f9f9;
@@ -4867,91 +5148,89 @@ ${additionalMessage}
                 text-align: center;
               }
               .total-section {
-                margin-top: 20px;
-                padding: 20px;
+                margin-top: 10px;
+                padding: 10px;
                 background: #e8f4f8;
-                border-radius: 5px;
+                border-radius: 3px;
                 border: 1px solid #3498db;
               }
               .total-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
-                gap: 20px;
+                gap: 10px;
                 text-align: center;
               }
               .total-item h4 {
                 margin: 0;
                 color: #2c3e50;
-                font-size: 24px;
+                font-size: 16px;
               }
               .total-item p {
-                margin: 5px 0;
+                margin: 2px 0;
                 color: #666;
+                font-size: 10px;
               }
               .footer {
-                margin-top: 40px;
-                padding-top: 20px;
+                margin-top: 15px;
+                padding-top: 10px;
                 border-top: 1px solid #ddd;
                 text-align: center;
                 color: #666;
-                font-size: 12px;
+                font-size: 10px;
               }
               .company-header {
-                margin-bottom: 20px;
+                margin-bottom: 10px;
                 text-align: center;
               }
               .company-header h2 {
                 color: #2c3e50;
                 margin: 0;
+                font-size: 16px;
               }
               .company-header p {
-                margin: 3px 0;
+                margin: 2px 0;
                 color: #666;
+                font-size: 10px;
               }
             </style>
           </head>
           <body>
-            <div class="company-header">
-              <h2>Insurance Sale Management</h2>
-              <p>ระบบจัดการขายประกันภัย</p>
-            </div>
-            
-            <div class="header">
-              <h1>ใบงาน</h1>
-              <p>เลขที่: ${workOrderId}</p>
-              <p>วันที่สร้าง: ${formatDate(workOrder.createdDate)}</p>
-              <p>สถานะ: ${workOrder.status}</p>
-            </div>
-            
-            <div class="section">
-              <h3>ข้อมูลลูกค้า</h3>
-              <div class="info-grid">
-                <div class="info-item">
-                  <label>ชื่อ-นามสกุล:</label>
-                  <span>${customer.name}</span>
+            <div class="print-container">
+              <div class="company-header">
+                <h2>Insurance Sale Management</h2>
+                <p>ระบบจัดการขายประกันภัย</p>
+              </div>
+              
+              <div class="header">
+                <h1>ใบงาน</h1>
+                <p>เลขที่: ${workOrderId} | วันที่สร้าง: ${formatDate(workOrder.createdDate)} | สถานะ: ${workOrder.status}</p>
+              </div>
+              
+              <div class="section">
+                <h3>ข้อมูลลูกค้า</h3>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <label>ชื่อ-นามสกุล:</label>
+                    <span>${customer.name}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>เลขบัตรประชาชน:</label>
+                    <span>${customer.idCard || '-'}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>เบอร์โทร:</label>
+                    <span>${customer.phone || '-'}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>อีเมล:</label>
+                    <span>${customer.email || '-'}</span>
+                  </div>
                 </div>
                 <div class="info-item">
-                  <label>เลขบัตรประชาชน:</label>
-                  <span>${customer.idCard || '-'}</span>
-                </div>
-                <div class="info-item">
-                  <label>เบอร์โทร:</label>
-                  <span>${customer.phone || '-'}</span>
-                </div>
-                <div class="info-item">
-                  <label>อีเมล:</label>
-                  <span>${customer.email || '-'}</span>
+                  <label>ที่อยู่ตามเอกสาร:</label>
+                  <span>${customer.documentAddress || '-'}</span>
                 </div>
               </div>
-              <div class="info-item" style="margin-top: 10px;">
-                <label>ที่อยู่ตามเอกสาร:</label>
-                <span>${customer.documentAddress || '-'}</span>
-              </div>
-              <div class="info-item">
-                <label>ที่อยู่จัดส่ง:</label>
-                <span>${customer.shippingAddress || '-'}</span>
-              </div>
-            </div>
         `;
         
         // Add vehicle info if available
@@ -4985,22 +5264,23 @@ ${additionalMessage}
           `;
         }
         
-        // Add work order items
+        // Add work order items - ปรับขนาดตารางให้เล็กลง
         printContent += `
           <div class="section">
             <h3>รายการในใบงาน</h3>
             <table>
               <thead>
                 <tr>
-                  <th style="width: 5%;">ลำดับ</th>
-                  <th style="width: 15%;">ประเภทบริการ</th>
-                  <th style="width: 20%;">รายละเอียด</th>
+                  <th style="width: 3%;">ลำดับ</th>
+                  <th style="width: 12%;">ประเภทบริการ</th>
+                  <th style="width: 18%;">รายละเอียด</th>
                   <th style="width: 10%;">ประเภทประกัน</th>
                   <th style="width: 10%;" class="text-right">ทุนประกัน</th>
                   <th style="width: 10%;" class="text-right">เบี้ยประกัน</th>
-                  <th style="width: 10%;" class="text-center">วันเริ่ม</th>
-                  <th style="width: 10%;" class="text-center">วันสิ้นสุด</th>
+                  <th style="width: 9%;" class="text-center">วันเริ่ม</th>
+                  <th style="width: 9%;" class="text-center">วันสิ้นสุด</th>
                   <th style="width: 10%;">เลขกรมธรรม์</th>
+                  <th style="width: 9%;">บริษัทประกัน</th>
                 </tr>
               </thead>
               <tbody>
@@ -5013,17 +5293,21 @@ ${additionalMessage}
           totalPremium += parseFloat(item.premium) || 0;
           totalSumInsured += parseFloat(item.sumInsured) || 0;
           
+          const company = companies.find(c => c.id === item.insuranceCompany);
+          const companyName = company ? company.name.replace(/บริษัท|จำกัด|\(มหาชน\)/g, '').trim() : '-';
+          
           printContent += `
             <tr>
               <td class="text-center">${index + 1}</td>
               <td>${item.serviceType || '-'}</td>
-              <td>${item.details || '-'}</td>
+              <td style="font-size: 9px;">${item.details || '-'}</td>
               <td>${item.insuranceType || '-'}</td>
               <td class="text-right">฿${formatNumber(item.sumInsured)}</td>
               <td class="text-right">฿${formatNumber(item.premium)}</td>
-              <td class="text-center">${item.startDate ? formatDate(item.startDate) : '-'}</td>
-              <td class="text-center">${item.endDate ? formatDate(item.endDate) : '-'}</td>
-              <td>${item.policyNumber || '-'}</td>
+              <td class="text-center" style="font-size: 9px;">${item.startDate ? formatDate(item.startDate) : '-'}</td>
+              <td class="text-center" style="font-size: 9px;">${item.endDate ? formatDate(item.endDate) : '-'}</td>
+              <td style="font-size: 9px;">${item.policyNumber || '-'}</td>
+              <td style="font-size: 9px;">${companyName}</td>
             </tr>
           `;
         });
@@ -5034,7 +5318,7 @@ ${additionalMessage}
           </div>
           
           <div class="total-section">
-            <h3 style="text-align: center; margin-top: 0;">สรุปยอดรวม</h3>
+            <h3 style="text-align: center; margin-top: 0; font-size: 14px;">สรุปยอดรวม</h3>
             <div class="total-grid">
               <div class="total-item">
                 <h4>${items.length}</h4>
@@ -5052,10 +5336,10 @@ ${additionalMessage}
           </div>
           
           <div class="footer">
-            <p>พิมพ์วันที่: ${formatDateTime(new Date())}</p>
-            <p>พิมพ์โดย: ${currentUser || 'ผู้ใช้งาน'}</p>
+            <p>พิมพ์วันที่: ${formatDateTime(new Date())} | พิมพ์โดย: ${currentUser || 'ผู้ใช้งาน'}</p>
             <p>Insurance Sale Management System</p>
           </div>
+        </div>
         </body>
         </html>
         `;
@@ -5317,6 +5601,362 @@ ${additionalMessage}
       return { success: true, data: results };
     }
     
+    // ==================== PAYMENT FUNCTIONS ====================
+    function handlePaymentTypeChange() {
+      const paymentType = document.getElementById('wo-payment-type');
+      const installmentGroup = document.getElementById('installment-group');
+      const bankGroup = document.getElementById('bank-group');
+      const referenceGroup = document.getElementById('payment-reference-group');
+      const installmentPlan = document.getElementById('installment-plan');
+      
+      if (!paymentType) return;
+      
+      // Reset all groups
+      if (installmentGroup) installmentGroup.style.display = 'none';
+      if (bankGroup) bankGroup.style.display = 'none';
+      if (installmentPlan) installmentPlan.style.display = 'none';
+      
+      // Show/hide based on payment type
+      switch(paymentType.value) {
+        case 'ผ่อนชำระ':
+          if (installmentGroup) installmentGroup.style.display = 'block';
+          break;
+        case 'โอนเงิน':
+          if (bankGroup) bankGroup.style.display = 'block';
+          if (referenceGroup) {
+            const label = referenceGroup.querySelector('label');
+            if (label) label.textContent = 'เลขที่อ้างอิงการโอน';
+          }
+          break;
+        case 'บัตรเครดิต':
+          if (referenceGroup) {
+            const label = referenceGroup.querySelector('label');
+            if (label) label.textContent = '4 หลักท้ายบัตร';
+          }
+          break;
+        case 'เงินสด':
+          if (referenceGroup) {
+            const label = referenceGroup.querySelector('label');
+            if (label) label.textContent = 'ใบเสร็จเลขที่';
+          }
+          break;
+      }
+    }
+    
+    function generateInstallmentPlan() {
+      const installments = document.getElementById('wo-installments');
+      const installmentPlan = document.getElementById('installment-plan');
+      const installmentBody = document.getElementById('installment-plan-body');
+      
+      if (!installments || !installmentPlan || !installmentBody) return;
+      
+      const numberOfInstallments = parseInt(installments.value);
+      if (!numberOfInstallments) {
+        installmentPlan.style.display = 'none';
+        return;
+      }
+      
+      // Calculate total premium
+      const totalPremium = workOrderItems.reduce((sum, item) => sum + (parseFloat(item.premium) || 0), 0);
+      const amountPerInstallment = Math.ceil(totalPremium / numberOfInstallments);
+      
+      // Get start date
+      const paymentDate = document.getElementById('wo-payment-date');
+      const startDate = paymentDate && paymentDate.value ? new Date(paymentDate.value) : new Date();
+      
+      // Generate installment rows
+      let installmentHtml = '';
+      for (let i = 0; i < numberOfInstallments; i++) {
+        const dueDate = new Date(startDate);
+        dueDate.setMonth(dueDate.getMonth() + i);
+        
+        installmentHtml += `
+          <tr>
+            <td>งวดที่ ${i + 1}</td>
+            <td>฿${formatNumber(amountPerInstallment)}</td>
+            <td>${formatDate(dueDate)}</td>
+            <td><span class="badge badge-warning">รอชำระ</span></td>
+          </tr>
+        `;
+      }
+      
+      installmentBody.innerHTML = installmentHtml;
+      installmentPlan.style.display = 'block';
+    }
+    
+    function openPaymentModal(workOrderId) {
+      // Get work order details
+      const workOrder = workOrders.find(wo => wo.id === workOrderId);
+      if (!workOrder) {
+        showToast('ไม่พบข้อมูลใบงาน', 'error');
+        return;
+      }
+      
+      // Create payment modal content
+      const modalContent = `
+        <div class="form-group">
+          <label>เลขที่ใบงาน</label>
+          <input type="text" class="form-control" value="${workOrderId}" readonly>
+        </div>
+        <div class="form-group">
+          <label>ลูกค้า</label>
+          <input type="text" class="form-control" value="${workOrder.customerName}" readonly>
+        </div>
+        <div class="form-group">
+          <label>ยอดค้างชำระ</label>
+          <input type="text" class="form-control" value="฿${formatNumber(workOrder.remainingAmount || workOrder.premium)}" readonly>
+        </div>
+        <div class="form-group">
+          <label>จำนวนเงินที่ชำระ *</label>
+          <input type="number" class="form-control" id="payment-amount" min="0" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>ประเภทการชำระเงิน *</label>
+          <select class="form-control" id="payment-type" required onchange="handleModalPaymentTypeChange()">
+            <option value="">-- เลือกประเภท --</option>
+            <option value="โอนเงิน">โอนเงิน</option>
+            <option value="บัตรเครดิต">บัตรเครดิต</option>
+            <option value="เงินสด">เงินสด</option>
+          </select>
+        </div>
+        <div class="form-group" id="modal-bank-group" style="display: none;">
+          <label>ธนาคาร</label>
+          <select class="form-control" id="payment-bank">
+            <option value="">-- เลือกธนาคาร --</option>
+            <option value="กรุงเทพ">ธนาคารกรุงเทพ</option>
+            <option value="กสิกรไทย">ธนาคารกสิกรไทย</option>
+            <option value="ไทยพาณิชย์">ธนาคารไทยพาณิชย์</option>
+            <option value="กรุงไทย">ธนาคารกรุงไทย</option>
+            <option value="ทหารไทยธนชาต">ธนาคารทหารไทยธนชาต</option>
+            <option value="กรุงศรี">ธนาคารกรุงศรี</option>
+            <option value="ออมสิน">ธนาคารออมสิน</option>
+            <option value="อื่นๆ">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label id="payment-reference-label">เลขที่อ้างอิง</label>
+          <input type="text" class="form-control" id="payment-reference">
+        </div>
+        <div class="form-group">
+          <label>หมายเหตุ</label>
+          <textarea class="form-control" id="payment-notes" rows="2"></textarea>
+        </div>
+      `;
+      
+      // Use search results modal to display payment form
+      const modal = document.getElementById('search-results-modal');
+      const content = document.getElementById('search-results-content');
+      
+      if (modal && content) {
+        // Update modal header
+        const modalHeader = modal.querySelector('.modal-header h3');
+        if (modalHeader) {
+          modalHeader.textContent = 'บันทึกการชำระเงิน';
+        }
+        
+        content.innerHTML = modalContent;
+        
+        // Add footer with buttons
+        const modalBody = modal.querySelector('.modal-body');
+        if (modalBody) {
+          const footer = document.createElement('div');
+          footer.className = 'modal-footer';
+          footer.style.marginTop = '20px';
+          footer.innerHTML = `
+            <button class="btn btn-secondary" onclick="closeModal('search-results-modal')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="savePayment('${workOrderId}')">
+              <span class="material-icons">save</span>
+              บันทึกการชำระ
+            </button>
+          `;
+          modalBody.appendChild(footer);
+        }
+        
+        modal.style.display = 'block';
+      }
+    }
+    
+    function handleModalPaymentTypeChange() {
+      const paymentType = document.getElementById('payment-type');
+      const bankGroup = document.getElementById('modal-bank-group');
+      const referenceLabel = document.getElementById('payment-reference-label');
+      
+      if (!paymentType) return;
+      
+      // Reset
+      if (bankGroup) bankGroup.style.display = 'none';
+      
+      // Show/hide based on payment type
+      switch(paymentType.value) {
+        case 'โอนเงิน':
+          if (bankGroup) bankGroup.style.display = 'block';
+          if (referenceLabel) referenceLabel.textContent = 'เลขที่อ้างอิงการโอน';
+          break;
+        case 'บัตรเครดิต':
+          if (referenceLabel) referenceLabel.textContent = '4 หลักท้ายบัตร';
+          break;
+        case 'เงินสด':
+          if (referenceLabel) referenceLabel.textContent = 'ใบเสร็จเลขที่';
+          break;
+      }
+    }
+    
+    async function savePayment(workOrderId) {
+      const amount = document.getElementById('payment-amount')?.value;
+      const paymentType = document.getElementById('payment-type')?.value;
+      
+      if (!amount || parseFloat(amount) <= 0) {
+        showToast('กรุณาใส่จำนวนเงินที่ชำระ', 'warning');
+        return;
+      }
+      
+      if (!paymentType) {
+        showToast('กรุณาเลือกประเภทการชำระเงิน', 'warning');
+        return;
+      }
+      
+      const paymentData = {
+        workOrderId: workOrderId,
+        amount: parseFloat(amount),
+        paymentType: paymentType,
+        referenceNumber: document.getElementById('payment-reference')?.value || '',
+        bank: document.getElementById('payment-bank')?.value || '',
+        notes: document.getElementById('payment-notes')?.value || ''
+      };
+      
+      try {
+        showLoading('กำลังบันทึกการชำระเงิน...');
+        
+        const result = await callGoogleScript('savePayment', paymentData);
+        
+        if (result && result.success) {
+          showToast(result.message, 'success');
+          closeModal('search-results-modal');
+          await refreshWorkOrderList();
+        } else {
+          throw new Error(result?.message || 'Save payment failed');
+        }
+        
+        hideLoading();
+      } catch (error) {
+        hideLoading();
+        console.error('Error saving payment:', error);
+        showToast(`เกิดข้อผิดพลาด: ${error.message}`, 'error');
+      }
+    }
+    
+    async function viewPaymentHistory(workOrderId) {
+      try {
+        showLoading('กำลังโหลดประวัติการชำระเงิน...');
+        
+        const payments = await callGoogleScript('getPaymentHistory', workOrderId);
+        const installments = await callGoogleScript('getInstallmentPlan', workOrderId);
+        
+        hideLoading();
+        displayPaymentHistory(workOrderId, payments, installments);
+      } catch (error) {
+        hideLoading();
+        console.error('Error loading payment history:', error);
+        showToast('ไม่สามารถโหลดประวัติการชำระเงินได้', 'error');
+      }
+    }
+    
+    function displayPaymentHistory(workOrderId, payments, installments) {
+      let historyHtml = `
+        <h4>ประวัติการชำระเงิน - ใบงาน ${workOrderId}</h4>
+      `;
+      
+      // Payment history table
+      if (payments && payments.length > 0) {
+        historyHtml += `
+          <h5>รายการชำระเงิน</h5>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>วันที่ชำระ</th>
+                  <th>ประเภท</th>
+                  <th>จำนวนเงิน</th>
+                  <th>เลขที่อ้างอิง</th>
+                  <th>ธนาคาร</th>
+                  <th>หมายเหตุ</th>
+                  <th>ผู้บันทึก</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        payments.forEach(payment => {
+          historyHtml += `
+            <tr>
+              <td>${formatDate(payment.paymentDate)}</td>
+              <td>${payment.paymentType}</td>
+              <td>฿${formatNumber(payment.amount)}</td>
+              <td>${payment.referenceNumber || '-'}</td>
+              <td>${payment.bank || '-'}</td>
+              <td>${payment.notes || '-'}</td>
+              <td>${payment.recordedBy || '-'}</td>
+            </tr>
+          `;
+        });
+        
+        historyHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      
+      // Installment plan if exists
+      if (installments && installments.length > 0) {
+        historyHtml += `
+          <h5 class="mt-3">แผนการผ่อนชำระ</h5>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>งวดที่</th>
+                  <th>จำนวนเงิน</th>
+                  <th>วันครบกำหนด</th>
+                  <th>วันที่ชำระ</th>
+                  <th>สถานะ</th>
+                  <th>เลขที่อ้างอิง</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        installments.forEach(inst => {
+          const statusClass = inst.status === 'ชำระแล้ว' ? 'badge-success' : 'badge-warning';
+          historyHtml += `
+            <tr>
+              <td>${inst.installmentNumber}/${inst.totalInstallments}</td>
+              <td>฿${formatNumber(inst.amount)}</td>
+              <td>${formatDate(inst.dueDate)}</td>
+              <td>${inst.paymentDate ? formatDate(inst.paymentDate) : '-'}</td>
+              <td><span class="badge ${statusClass}">${inst.status}</span></td>
+              <td>${inst.referenceNumber || '-'}</td>
+            </tr>
+          `;
+        });
+        
+        historyHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      
+      // Use search results modal to display
+      const modal = document.getElementById('search-results-modal');
+      const content = document.getElementById('search-results-content');
+      
+      if (modal && content) {
+        content.innerHTML = historyHtml;
+        modal.style.display = 'block';
+      }
+    }
+    
     // ==================== UTILITY FUNCTIONS ====================
     function formatNumber(num) {
       const number = parseFloat(num) || 0;
@@ -5354,6 +5994,17 @@ ${additionalMessage}
         'จัดส่งแล้ว': 'badge-info',
         'ยกเลิก': 'badge-danger',
         'รอต่อภาษี': 'badge-warning'
+      };
+      return classes[status] || 'badge-secondary';
+    }
+    
+    function getPaymentStatusBadgeClass(status) {
+      const classes = {
+        'รอชำระเงิน': 'badge-warning',
+        'ชำระบางส่วน': 'badge-info',
+        'ชำระเต็มจำนวน': 'badge-success',
+        'เกินกำหนดชำระ': 'badge-danger',
+        'ยกเลิก': 'badge-secondary'
       };
       return classes[status] || 'badge-secondary';
     }
@@ -5451,6 +6102,7 @@ ${additionalMessage}
     window.refreshWorkOrderList = refreshWorkOrderList;
     window.viewWorkOrderDetails = viewWorkOrderDetails;
     window.editWorkOrder = editWorkOrder;
+    window.cloneWorkOrder = cloneWorkOrder;
     window.confirmCancel = confirmCancel;
     window.cancelWorkOrder = cancelWorkOrder;
     window.selectCustomer = selectCustomer;
@@ -5460,7 +6112,15 @@ ${additionalMessage}
     window.sendEmailNotification = sendEmailNotification;
     window.updateEmailBody = updateEmailBody;
     window.printWorkOrderSummary = printWorkOrderSummary;
+    window.printWorkOrder = printWorkOrder;
     window.searchVehicles = searchVehicles;
+    
+    window.openPaymentModal = openPaymentModal;
+    window.savePayment = savePayment;
+    window.handleModalPaymentTypeChange = handleModalPaymentTypeChange;
+    window.viewPaymentHistory = viewPaymentHistory;
+    window.handlePaymentTypeChange = handlePaymentTypeChange;
+    window.generateInstallmentPlan = generateInstallmentPlan;
     
     console.log('All functions registered globally');
   </script>
