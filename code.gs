@@ -25,6 +25,24 @@ const SERVICE_SHEET_MAPPING = {
   'อื่นๆ': 'อื่นๆ'
 };
 
+// Payment statuses
+const PAYMENT_STATUS = {
+  PENDING: 'รอชำระเงิน',
+  PARTIAL: 'ชำระบางส่วน',
+  COMPLETED: 'ชำระเต็มจำนวน',
+  OVERDUE: 'เกินกำหนดชำระ',
+  CANCELLED: 'ยกเลิก',
+  INSTALLMENT: 'อยู่ระหว่างผ่อนชำระ' // เพิ่มสถานะใหม่
+};
+
+// Renewal statuses
+const RENEWAL_STATUS = {
+  PENDING: 'รอดำเนินการ',
+  NOTIFIED: 'แจ้งผู้เอาประกันแล้ว',
+  ORDERED: 'สั่งต่ออายุแล้ว',
+  EXPIRED: 'กรมธรรม์ขาดต่อ'
+};
+
 // ==================== Error Handling Wrapper ====================
 function safeExecute(functionName, fn, defaultReturn = null) {
   try {
@@ -78,16 +96,24 @@ function getSheetHeaders(sheetName) {
     'ลูกค้า': ['รหัสลูกค้า', 'ชื่อ-นามสกุล', 'เลขบัตรประชาชน', 'เบอร์โทร', 'อีเมล', 'ที่อยู่จัดส่ง', 'ที่อยู่ตามเอกสาร', 'วันที่สร้าง', 'สถานะ', 'หมายเหตุ'],
     'รถ': ['รหัสรถ', 'รหัสลูกค้า', 'ทะเบียนรถ', 'ยี่ห้อ', 'รุ่น', 'สี', 'ปีรถ', 'เลขตัวถัง', 'วันที่สร้าง', 'สถานะ'],
     'ทรัพย์สิน': ['รหัสทรัพย์สิน', 'รหัสลูกค้า', 'ประเภท', 'ชื่อทรัพย์สิน', 'ที่อยู่', 'มูลค่า', 'รายละเอียด', 'วันที่สร้าง', 'สถานะ', 'ประเภทรถ', 'รหัสรถ'],
-    'ใบงาน': ['เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทประกัน', 'รหัสทรัพย์สิน', 'รายละเอียด', 'ทุนประกัน', 'เบี้ยประกัน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขกรมธรรม์', 'สถานะ', 'วันที่สร้าง', 'บริษัทประกัน', 'ผู้สร้าง', 'วันที่แก้ไข'],
+    'ใบงาน': ['เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทประกัน', 'รหัสทรัพย์สิน', 'รายละเอียด', 'ทุนประกัน', 'เบี้ยประกัน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขกรมธรรม์', 'สถานะ', 'วันที่สร้าง', 'บริษัทประกัน', 'ผู้สร้าง', 'วันที่แก้ไข', 'สถานะการชำระเงิน', 'ประเภทการชำระ', 'จำนวนงวด', 'ยอดชำระแล้ว', 'ยอดค้างชำระ', 'ส่วนลด', 'ยอดชำระจริง'],
     'รายการใบงาน': ['รหัสรายการ', 'เลขที่ใบงาน', 'ประเภทบริการ', 'ประเภทประกัน', 'รายละเอียด', 'ทุนประกัน', 'เบี้ยประกัน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขกรมธรรม์', 'บริษัทประกัน', 'สถานะ', 'หมายเหตุ'],
-    'บริษัทประกัน': ['รหัสบริษัท', 'ชื่อบริษัท', 'ที่อยู่', 'เบอร์โทร', 'ผู้ติดต่อ', 'สถานะ'],
+    'บริษัทประกัน': ['รหัสบริษัท', 'ชื่อบริษัท', 'ที่อยู่', 'เบอร์โทร', 'ผู้ติดต่อ', 'สถานะ', 'อีเมล'],
     'ประวัติ': ['รหัสประวัติ', 'วันที่', 'ผู้ใช้', 'การกระทำ', 'รายละเอียด', 'ตารางที่เกี่ยวข้อง', 'รหัสอ้างอิง'],
     
-    // New service type specific sheets
-    'ประกันภัย': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'ประเภทประกัน', 'รายละเอียด', 'ทุนประกัน', 'เบี้ยประกัน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขกรมธรรม์', 'บริษัทประกัน', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ'],
-    'ภาษี': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขที่อ้างอิง', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ'],
-    'ค่าบริการ': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันที่ให้บริการ', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ'],
-    'อื่นๆ': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันที่', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ']
+    // Payment related sheets - อัพเดตเพิ่มฟิลด์ใหม่
+    'การชำระเงิน': ['รหัสการชำระ', 'เลขที่ใบงาน', 'วันที่ชำระ', 'ประเภทการชำระ', 'จำนวนเงิน', 'หมายเลขอ้างอิง', 'ธนาคาร', 'หมายเหตุ', 'ผู้บันทึก', 'สถานะ', 'งวดที่'],
+    'งวดการชำระ': ['รหัสงวด', 'เลขที่ใบงาน', 'งวดที่', 'จำนวนงวดทั้งหมด', 'จำนวนเงิน', 'วันครบกำหนด', 'วันที่ชำระ', 'สถานะ', 'หมายเลขอ้างอิง', 'หมายเหตุ', 'จำนวนเงินดาวน์', 'วันครบกำหนดเดิม'],
+    
+    // Service type specific sheets
+    'ประกันภัย': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'ประเภทประกัน', 'รายละเอียด', 'ทุนประกัน', 'เบี้ยประกัน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขกรมธรรม์', 'บริษัทประกัน', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ', 'เลขตัวถัง'],
+    'ภาษี': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันเริ่ม', 'วันสิ้นสุด', 'เลขที่อ้างอิง', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ', 'เลขตัวถัง'],
+    'ค่าบริการ': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันที่ให้บริการ', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ', 'เลขตัวถัง'],
+    'อื่นๆ': ['รหัสรายการ', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทบริการ', 'รายละเอียด', 'จำนวนเงิน', 'วันที่', 'สถานะ', 'วันที่สร้าง', 'หมายเหตุ', 'เลขตัวถัง'],
+    
+    // New sheets for tracking
+    'ติดตามการผ่อนชำระ': ['รหัส', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'งวดที่', 'จำนวนเงิน', 'วันครบกำหนด', 'สถานะ', 'วันที่ชำระ', 'หมายเหตุ', 'ผู้ติดตาม'],
+    'ติดตามการต่ออายุ': ['รหัส', 'เลขที่ใบงาน', 'รหัสลูกค้า', 'ชื่อลูกค้า', 'ประเภทประกัน', 'วันหมดอายุ', 'สถานะการต่ออายุ', 'วันที่แจ้ง', 'วันที่สั่งต่อ', 'เลขกรมธรรม์ใหม่', 'หมายเหตุ', 'ผู้ติดตาม']
   };
   
   return headerMap[sheetName] || [];
@@ -103,13 +129,16 @@ function initializeSystem() {
     console.log('Connected to spreadsheet:', ss.getName());
     
     // Base sheets
-    const baseSheets = ['ลูกค้า', 'รถ', 'ทรัพย์สิน', 'ใบงาน', 'รายการใบงาน', 'บริษัทประกัน', 'ประวัติ'];
+    const baseSheets = ['ลูกค้า', 'รถ', 'ทรัพย์สิน', 'ใบงาน', 'รายการใบงาน', 'บริษัทประกัน', 'ประวัติ', 'การชำระเงิน', 'งวดการชำระ'];
     
     // Service type specific sheets
     const serviceSheets = ['ประกันภัย', 'ภาษี', 'ค่าบริการ', 'อื่นๆ'];
     
+    // Tracking sheets
+    const trackingSheets = ['ติดตามการผ่อนชำระ', 'ติดตามการต่ออายุ'];
+    
     // Create all sheets
-    [...baseSheets, ...serviceSheets].forEach(sheetName => {
+    [...baseSheets, ...serviceSheets, ...trackingSheets].forEach(sheetName => {
       console.log('Creating/checking sheet:', sheetName);
       getOrCreateSheet(sheetName);
     });
@@ -124,7 +153,7 @@ function initializeSystem() {
     console.log('System initialization complete');
     return { 
       success: true, 
-      message: 'ระบบพร้อมใช้งาน รองรับการแยกบันทึกตามประเภทบริการ',
+      message: 'ระบบพร้อมใช้งาน รองรับการแยกบันทึกตามประเภทบริการ การชำระเงิน และการติดตาม',
       spreadsheetName: ss.getName(),
       spreadsheetUrl: ss.getUrl(),
       userEmail: Session.getActiveUser().getEmail(),
@@ -139,15 +168,756 @@ function initializeDefaultCompanies() {
     if (companySheet.getLastRow() <= 1) {
       console.log('Adding default companies...');
       const defaultCompanies = [
-        ['COM001', 'บริษัท ทิพยประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-123-4567', 'คุณสมชาย', 'Active'],
-        ['COM002', 'บริษัท วิริยะประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-234-5678', 'คุณสมหญิง', 'Active'],
-        ['COM003', 'บริษัท กรุงเทพประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-345-6789', 'คุณสมศักดิ์', 'Active']
+        ['COM001', 'บริษัท ทิพยประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-123-4567', 'คุณสมชาย', 'Active', 'contact@dhipaya.co.th'],
+        ['COM002', 'บริษัท วิริยะประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-234-5678', 'คุณสมหญิง', 'Active', 'contact@viriyah.co.th'],
+        ['COM003', 'บริษัท กรุงเทพประกันภัย จำกัด (มหาชน)', 'กรุงเทพฯ', '02-345-6789', 'คุณสมศักดิ์', 'Active', 'contact@bangkokinsurance.com']
       ];
       companySheet.getRange(2, 1, defaultCompanies.length, defaultCompanies[0].length).setValues(defaultCompanies);
     }
   } catch (error) {
     console.error('Error initializing default companies:', error);
   }
+}
+
+// ==================== Payment Functions ====================
+function generatePaymentId() {
+  try {
+    const sheet = getOrCreateSheet('การชำระเงิน');
+    const lastRow = sheet.getLastRow();
+    const today = new Date();
+    const year = Utilities.formatDate(today, 'GMT+7', 'yyyy');
+    const month = Utilities.formatDate(today, 'GMT+7', 'MM');
+    return 'PAY' + year + month + String(lastRow).padStart(4, '0');
+  } catch (error) {
+    console.error('Error generating payment ID:', error);
+    return 'PAY' + String(Date.now()).substr(-8);
+  }
+}
+
+function generateInstallmentId() {
+  try {
+    const sheet = getOrCreateSheet('งวดการชำระ');
+    const lastRow = sheet.getLastRow();
+    return 'INST' + String(lastRow).padStart(6, '0');
+  } catch (error) {
+    console.error('Error generating installment ID:', error);
+    return 'INST' + String(Date.now()).substr(-6);
+  }
+}
+
+// Enhanced savePayment function
+function savePayment(data) {
+  return safeExecute('savePayment', function() {
+    if (!data || !data.workOrderId || !data.amount || !data.paymentType) {
+      throw new Error('ข้อมูลการชำระเงินไม่ครบถ้วน');
+    }
+    
+    const paymentSheet = getOrCreateSheet('การชำระเงิน');
+    const workOrderSheet = getOrCreateSheet('ใบงาน');
+    const paymentId = generatePaymentId();
+    const user = Session.getActiveUser().getEmail();
+    const now = new Date();
+    
+    // Save payment record with installment number if applicable
+    paymentSheet.appendRow([
+      paymentId,
+      data.workOrderId,
+      now,
+      data.paymentType,
+      parseFloat(data.amount),
+      data.referenceNumber || '',
+      data.bank || '',
+      data.notes || '',
+      user,
+      'สำเร็จ',
+      data.installmentNumber || '' // เพิ่มเลขงวด
+    ]);
+    
+    // Update work order payment status
+    updateWorkOrderPaymentStatus(data.workOrderId);
+    
+    // Add to history
+    addHistory('บันทึกการชำระเงิน', `ชำระเงิน ${data.paymentType} จำนวน ${data.amount} บาท`, 'การชำระเงิน', paymentId);
+    
+    return { 
+      success: true, 
+      message: 'บันทึกการชำระเงินสำเร็จ', 
+      paymentId: paymentId 
+    };
+  });
+}
+
+// Enhanced createInstallmentPlan with custom down payment and dates
+function createInstallmentPlan(data) {
+  return safeExecute('createInstallmentPlan', function() {
+    if (!data || !data.workOrderId || !data.totalAmount || !data.numberOfInstallments) {
+      throw new Error('ข้อมูลการผ่อนชำระไม่ครบถ้วน');
+    }
+    
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const numberOfInstallments = parseInt(data.numberOfInstallments);
+    
+    if (numberOfInstallments < 2 || numberOfInstallments > 6) {
+      throw new Error('จำนวนงวดต้องอยู่ระหว่าง 2-6 งวด');
+    }
+    
+    const totalAmount = parseFloat(data.totalAmount);
+    const downPayment = parseFloat(data.downPayment || 0);
+    const remainingAmount = totalAmount - downPayment;
+    const amountPerInstallment = Math.ceil(remainingAmount / (numberOfInstallments - 1));
+    const startDate = new Date(data.startDate || new Date());
+    const customDates = data.customDates || [];
+    
+    for (let i = 0; i < numberOfInstallments; i++) {
+      const installmentId = generateInstallmentId();
+      let dueDate;
+      let amount;
+      
+      if (i === 0) {
+        // งวดแรก (เงินดาวน์)
+        amount = downPayment > 0 ? downPayment : amountPerInstallment;
+        dueDate = startDate;
+      } else {
+        amount = amountPerInstallment;
+        // ใช้วันที่กำหนดเองถ้ามี
+        if (customDates[i]) {
+          dueDate = new Date(customDates[i]);
+        } else {
+          dueDate = new Date(startDate);
+          dueDate.setMonth(dueDate.getMonth() + i);
+        }
+      }
+      
+      installmentSheet.appendRow([
+        installmentId,
+        data.workOrderId,
+        i + 1,
+        numberOfInstallments,
+        amount,
+        dueDate,
+        '', // วันที่ชำระ
+        'รอชำระ',
+        '', // หมายเลขอ้างอิง
+        '', // หมายเหตุ
+        i === 0 ? downPayment : '', // จำนวนเงินดาวน์
+        dueDate // วันครบกำหนดเดิม (สำหรับการแก้ไข)
+      ]);
+    }
+    
+    // Update work order payment type
+    updateWorkOrderPaymentType(data.workOrderId, 'ผ่อนชำระ', numberOfInstallments);
+    
+    // Add to tracking
+    addInstallmentTracking(data.workOrderId);
+    
+    // Add to history
+    addHistory('สร้างแผนผ่อนชำระ', `สร้างแผนผ่อนชำระ ${numberOfInstallments} งวด`, 'งวดการชำระ', data.workOrderId);
+    
+    return { 
+      success: true, 
+      message: `สร้างแผนผ่อนชำระ ${numberOfInstallments} งวด สำเร็จ` 
+    };
+  });
+}
+
+// Enhanced payInstallment function
+function payInstallment(data) {
+  return safeExecute('payInstallment', function() {
+    if (!data || !data.installmentId || !data.amount) {
+      throw new Error('ข้อมูลการชำระงวดไม่ครบถ้วน');
+    }
+    
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const dataRange = installmentSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === data.installmentId) {
+        // Update installment record
+        installmentSheet.getRange(i + 1, 7).setValue(new Date()); // วันที่ชำระ
+        installmentSheet.getRange(i + 1, 8).setValue('ชำระแล้ว'); // สถานะ
+        installmentSheet.getRange(i + 1, 9).setValue(data.referenceNumber || ''); // หมายเลขอ้างอิง
+        installmentSheet.getRange(i + 1, 10).setValue(data.notes || ''); // หมายเหตุ
+        
+        // Record payment with installment number
+        const paymentData = {
+          workOrderId: values[i][1],
+          amount: data.amount,
+          paymentType: 'ผ่อนชำระ',
+          referenceNumber: data.referenceNumber,
+          bank: data.bank,
+          notes: `ชำระงวดที่ ${values[i][2]}/${values[i][3]}`,
+          installmentNumber: values[i][2]
+        };
+        
+        savePayment(paymentData);
+        
+        // Update tracking
+        updateInstallmentTracking(values[i][1], values[i][2]);
+        
+        return { 
+          success: true, 
+          message: `ชำระงวดที่ ${values[i][2]} สำเร็จ` 
+        };
+      }
+    }
+    
+    return { 
+      success: false, 
+      message: 'ไม่พบข้อมูลงวดการชำระ' 
+    };
+  });
+}
+
+// New function to update installment due date
+function updateInstallmentDueDate(data) {
+  return safeExecute('updateInstallmentDueDate', function() {
+    if (!data || !data.installmentId || !data.newDueDate) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+    
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const dataRange = installmentSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === data.installmentId) {
+        const oldDate = values[i][5];
+        installmentSheet.getRange(i + 1, 6).setValue(new Date(data.newDueDate)); // วันครบกำหนดใหม่
+        installmentSheet.getRange(i + 1, 12).setValue(oldDate); // เก็บวันเดิมไว้
+        
+        // Add to history
+        addHistory('แก้ไขวันครบกำหนด', `เปลี่ยนวันครบกำหนดงวดที่ ${values[i][2]}`, 'งวดการชำระ', values[i][1]);
+        
+        return { 
+          success: true, 
+          message: 'อัพเดตวันครบกำหนดสำเร็จ' 
+        };
+      }
+    }
+    
+    return { 
+      success: false, 
+      message: 'ไม่พบข้อมูลงวดการชำระ' 
+    };
+  });
+}
+
+// New function to update installment amount
+function updateInstallmentAmount(data) {
+  return safeExecute('updateInstallmentAmount', function() {
+    if (!data || !data.installmentId || !data.newAmount) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+    
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const dataRange = installmentSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === data.installmentId) {
+        const oldAmount = values[i][4];
+        installmentSheet.getRange(i + 1, 5).setValue(parseFloat(data.newAmount)); // จำนวนเงินใหม่
+        
+        // Recalculate remaining installments if first installment
+        if (values[i][2] === 1 && data.recalculateRemaining) {
+          const workOrderId = values[i][1];
+          const totalInstallments = values[i][3];
+          
+          // Get work order total
+          const workOrder = getWorkOrderById(workOrderId);
+          if (workOrder) {
+            const totalAmount = workOrder.actualAmount || workOrder.premium;
+            const downPayment = parseFloat(data.newAmount);
+            const remainingAmount = totalAmount - downPayment;
+            const remainingInstallments = totalInstallments - 1;
+            const newAmountPerInstallment = Math.ceil(remainingAmount / remainingInstallments);
+            
+            // Update remaining installments
+            for (let j = i + 1; j < values.length && values[j][1] === workOrderId; j++) {
+              installmentSheet.getRange(j + 1, 5).setValue(newAmountPerInstallment);
+            }
+          }
+        }
+        
+        // Add to history
+        addHistory('แก้ไขจำนวนเงิน', `เปลี่ยนจำนวนเงินงวดที่ ${values[i][2]} จาก ${oldAmount} เป็น ${data.newAmount}`, 'งวดการชำระ', values[i][1]);
+        
+        return { 
+          success: true, 
+          message: 'อัพเดตจำนวนเงินสำเร็จ' 
+        };
+      }
+    }
+    
+    return { 
+      success: false, 
+      message: 'ไม่พบข้อมูลงวดการชำระ' 
+    };
+  });
+}
+
+function getPaymentHistory(workOrderId) {
+  return safeExecute('getPaymentHistory', function() {
+    if (!workOrderId) {
+      throw new Error('ไม่พบเลขที่ใบงาน');
+    }
+    
+    const paymentSheet = getOrCreateSheet('การชำระเงิน');
+    const lastRow = paymentSheet.getLastRow();
+    
+    if (lastRow <= 1) return [];
+    
+    const values = paymentSheet.getRange(2, 1, lastRow - 1, 11).getValues();
+    
+    const payments = values
+      .filter(row => row[1] === workOrderId)
+      .map(row => ({
+        paymentId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        paymentDate: row[2] || '',
+        paymentType: String(row[3] || ''),
+        amount: parseFloat(row[4]) || 0,
+        referenceNumber: String(row[5] || ''),
+        bank: String(row[6] || ''),
+        notes: String(row[7] || ''),
+        recordedBy: String(row[8] || ''),
+        status: String(row[9] || ''),
+        installmentNumber: row[10] || ''
+      }));
+    
+    return payments;
+  });
+}
+
+function getInstallmentPlan(workOrderId) {
+  return safeExecute('getInstallmentPlan', function() {
+    if (!workOrderId) {
+      throw new Error('ไม่พบเลขที่ใบงาน');
+    }
+    
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    const lastRow = installmentSheet.getLastRow();
+    
+    if (lastRow <= 1) return [];
+    
+    const values = installmentSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+    
+    const installments = values
+      .filter(row => row[1] === workOrderId)
+      .map(row => ({
+        installmentId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        installmentNumber: parseInt(row[2]) || 0,
+        totalInstallments: parseInt(row[3]) || 0,
+        amount: parseFloat(row[4]) || 0,
+        dueDate: row[5] || '',
+        paymentDate: row[6] || '',
+        status: String(row[7] || ''),
+        referenceNumber: String(row[8] || ''),
+        notes: String(row[9] || ''),
+        downPaymentAmount: row[10] || '',
+        originalDueDate: row[11] || ''
+      }));
+    
+    return installments;
+  });
+}
+
+// Enhanced updateWorkOrderPaymentStatus
+function updateWorkOrderPaymentStatus(workOrderId) {
+  try {
+    const workOrderSheet = getOrCreateSheet('ใบงาน');
+    const paymentSheet = getOrCreateSheet('การชำระเงิน');
+    const installmentSheet = getOrCreateSheet('งวดการชำระ');
+    
+    // Get work order data
+    const workOrderData = getWorkOrderById(workOrderId);
+    if (!workOrderData) return;
+    
+    // Get all payments for this work order
+    const payments = getPaymentHistory(workOrderId);
+    
+    // Calculate total paid
+    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalAmount = workOrderData.actualAmount || workOrderData.premium || 0;
+    const remainingAmount = totalAmount - totalPaid;
+    
+    // Determine payment status
+    let paymentStatus = PAYMENT_STATUS.PENDING;
+    
+    if (workOrderData.paymentType === 'ผ่อนชำระ') {
+      // Check installment status
+      const installments = getInstallmentPlan(workOrderId);
+      const allPaid = installments.every(inst => inst.status === 'ชำระแล้ว');
+      const somePaid = installments.some(inst => inst.status === 'ชำระแล้ว');
+      
+      if (allPaid) {
+        paymentStatus = PAYMENT_STATUS.COMPLETED;
+      } else if (somePaid) {
+        paymentStatus = PAYMENT_STATUS.INSTALLMENT;
+      } else {
+        paymentStatus = PAYMENT_STATUS.PENDING;
+      }
+    } else {
+      // ชำระเต็มจำนวน
+      if (totalPaid >= totalAmount) {
+        paymentStatus = PAYMENT_STATUS.COMPLETED;
+      } else if (totalPaid > 0) {
+        paymentStatus = PAYMENT_STATUS.PARTIAL;
+      }
+    }
+    
+    // Update work order
+    const dataRange = workOrderSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === workOrderId) {
+        workOrderSheet.getRange(i + 1, 17).setValue(paymentStatus); // สถานะการชำระเงิน
+        workOrderSheet.getRange(i + 1, 20).setValue(totalPaid); // ยอดชำระแล้ว
+        workOrderSheet.getRange(i + 1, 21).setValue(remainingAmount); // ยอดค้างชำระ
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error updating work order payment status:', error);
+  }
+}
+
+function updateWorkOrderPaymentType(workOrderId, paymentType, numberOfInstallments) {
+  try {
+    const workOrderSheet = getOrCreateSheet('ใบงาน');
+    const dataRange = workOrderSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === workOrderId) {
+        workOrderSheet.getRange(i + 1, 18).setValue(paymentType); // ประเภทการชำระ
+        workOrderSheet.getRange(i + 1, 19).setValue(numberOfInstallments || ''); // จำนวนงวด
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error updating work order payment type:', error);
+  }
+}
+
+// Enhanced getWorkOrderById with discount and actual amount
+function getWorkOrderById(workOrderId) {
+  try {
+    const sheet = getOrCreateSheet('ใบงาน');
+    const dataRange = sheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === workOrderId) {
+        return {
+          id: String(values[i][0] || ''),
+          customerId: String(values[i][1] || ''),
+          customerName: String(values[i][2] || ''),
+          insuranceType: String(values[i][3] || ''),
+          propertyId: String(values[i][4] || ''),
+          details: String(values[i][5] || ''),
+          sumInsured: parseFloat(values[i][6]) || 0,
+          premium: parseFloat(values[i][7]) || 0,
+          startDate: values[i][8] || '',
+          endDate: values[i][9] || '',
+          policyNumber: String(values[i][10] || ''),
+          status: String(values[i][11] || ''),
+          createdDate: values[i][12] || '',
+          insuranceCompany: String(values[i][13] || ''),
+          createdBy: String(values[i][14] || ''),
+          modifiedDate: values[i][15] || '',
+          paymentStatus: String(values[i][16] || PAYMENT_STATUS.PENDING),
+          paymentType: String(values[i][17] || ''),
+          numberOfInstallments: values[i][18] || '',
+          totalPaid: parseFloat(values[i][19]) || 0,
+          remainingAmount: parseFloat(values[i][20]) || 0,
+          discount: parseFloat(values[i][21]) || 0,
+          actualAmount: parseFloat(values[i][22]) || parseFloat(values[i][7]) || 0
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting work order by ID:', error);
+    return null;
+  }
+}
+
+function getPaymentSummary(workOrderId) {
+  return safeExecute('getPaymentSummary', function() {
+    const workOrder = getWorkOrderById(workOrderId);
+    if (!workOrder) {
+      throw new Error('ไม่พบข้อมูลใบงาน');
+    }
+    
+    const payments = getPaymentHistory(workOrderId);
+    const installments = getInstallmentPlan(workOrderId);
+    
+    const totalAmount = workOrder.actualAmount || workOrder.premium || 0;
+    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const remainingAmount = totalAmount - totalPaid;
+    
+    // Check overdue installments
+    const today = new Date();
+    const overdueInstallments = installments.filter(inst => {
+      if (inst.status === 'ชำระแล้ว') return false;
+      const dueDate = new Date(inst.dueDate);
+      return dueDate < today;
+    });
+    
+    return {
+      workOrderId: workOrderId,
+      totalAmount: totalAmount,
+      discount: workOrder.discount || 0,
+      actualAmount: workOrder.actualAmount || totalAmount,
+      totalPaid: totalPaid,
+      remainingAmount: remainingAmount,
+      paymentStatus: workOrder.paymentStatus,
+      paymentType: workOrder.paymentType,
+      numberOfInstallments: workOrder.numberOfInstallments,
+      payments: payments,
+      installments: installments,
+      overdueInstallments: overdueInstallments,
+      isFullyPaid: totalPaid >= (workOrder.actualAmount || totalAmount)
+    };
+  });
+}
+
+// ==================== Tracking Functions ====================
+// Add installment tracking
+function addInstallmentTracking(workOrderId) {
+  try {
+    const trackingSheet = getOrCreateSheet('ติดตามการผ่อนชำระ');
+    const installments = getInstallmentPlan(workOrderId);
+    const workOrder = getWorkOrderById(workOrderId);
+    
+    if (!workOrder) return;
+    
+    installments.forEach(inst => {
+      if (inst.status !== 'ชำระแล้ว') {
+        const trackingId = 'TRK-INS' + String(trackingSheet.getLastRow()).padStart(5, '0');
+        
+        trackingSheet.appendRow([
+          trackingId,
+          workOrderId,
+          workOrder.customerId,
+          workOrder.customerName,
+          inst.installmentNumber,
+          inst.amount,
+          inst.dueDate,
+          'รอชำระ',
+          '', // วันที่ชำระ
+          '', // หมายเหตุ
+          Session.getActiveUser().getEmail()
+        ]);
+      }
+    });
+  } catch (error) {
+    console.error('Error adding installment tracking:', error);
+  }
+}
+
+// Update installment tracking
+function updateInstallmentTracking(workOrderId, installmentNumber) {
+  try {
+    const trackingSheet = getOrCreateSheet('ติดตามการผ่อนชำระ');
+    const dataRange = trackingSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][1] === workOrderId && values[i][4] === installmentNumber) {
+        trackingSheet.getRange(i + 1, 8).setValue('ชำระแล้ว');
+        trackingSheet.getRange(i + 1, 9).setValue(new Date());
+        break;
+      }
+    }
+  } catch (error) {
+    console.error('Error updating installment tracking:', error);
+  }
+}
+
+// Get installments due this month
+function getInstallmentsDueThisMonth() {
+  return safeExecute('getInstallmentsDueThisMonth', function() {
+    const trackingSheet = getOrCreateSheet('ติดตามการผ่อนชำระ');
+    const lastRow = trackingSheet.getLastRow();
+    
+    if (lastRow <= 1) return [];
+    
+    const values = trackingSheet.getRange(2, 1, lastRow - 1, 11).getValues();
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    const dueInstallments = values
+      .filter(row => {
+        if (row[7] === 'ชำระแล้ว') return false;
+        const dueDate = new Date(row[6]);
+        return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+      })
+      .map(row => ({
+        trackingId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        customerId: String(row[2] || ''),
+        customerName: String(row[3] || ''),
+        installmentNumber: row[4] || 0,
+        amount: parseFloat(row[5]) || 0,
+        dueDate: row[6] || '',
+        status: String(row[7] || ''),
+        paymentDate: row[8] || '',
+        notes: String(row[9] || ''),
+        trackedBy: String(row[10] || '')
+      }));
+    
+    return dueInstallments;
+  });
+}
+
+// Add renewal tracking
+function addRenewalTracking(workOrderId) {
+  try {
+    const trackingSheet = getOrCreateSheet('ติดตามการต่ออายุ');
+    const workOrder = getWorkOrderById(workOrderId);
+    
+    if (!workOrder || !workOrder.endDate) return;
+    
+    const trackingId = 'TRK-REN' + String(trackingSheet.getLastRow()).padStart(5, '0');
+    
+    trackingSheet.appendRow([
+      trackingId,
+      workOrderId,
+      workOrder.customerId,
+      workOrder.customerName,
+      workOrder.insuranceType,
+      workOrder.endDate,
+      RENEWAL_STATUS.PENDING,
+      '', // วันที่แจ้ง
+      '', // วันที่สั่งต่อ
+      '', // เลขกรมธรรม์ใหม่
+      '', // หมายเหตุ
+      Session.getActiveUser().getEmail()
+    ]);
+  } catch (error) {
+    console.error('Error adding renewal tracking:', error);
+  }
+}
+
+// Update renewal status
+function updateRenewalStatus(data) {
+  return safeExecute('updateRenewalStatus', function() {
+    if (!data || !data.trackingId || !data.status) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+    
+    const trackingSheet = getOrCreateSheet('ติดตามการต่ออายุ');
+    const dataRange = trackingSheet.getDataRange();
+    const values = dataRange.getValues();
+    
+    for (let i = 1; i < values.length; i++) {
+      if (values[i][0] === data.trackingId) {
+        trackingSheet.getRange(i + 1, 7).setValue(data.status);
+        
+        // Update dates based on status
+        if (data.status === RENEWAL_STATUS.NOTIFIED) {
+          trackingSheet.getRange(i + 1, 8).setValue(new Date());
+        } else if (data.status === RENEWAL_STATUS.ORDERED) {
+          trackingSheet.getRange(i + 1, 9).setValue(new Date());
+          if (data.newPolicyNumber) {
+            trackingSheet.getRange(i + 1, 10).setValue(data.newPolicyNumber);
+          }
+        }
+        
+        if (data.notes) {
+          trackingSheet.getRange(i + 1, 11).setValue(data.notes);
+        }
+        
+        // Add to history
+        addHistory('อัพเดตสถานะการต่ออายุ', `เปลี่ยนสถานะเป็น ${data.status}`, 'ติดตามการต่ออายุ', values[i][1]);
+        
+        return { 
+          success: true, 
+          message: 'อัพเดตสถานะสำเร็จ' 
+        };
+      }
+    }
+    
+    return { 
+      success: false, 
+      message: 'ไม่พบข้อมูลการติดตาม' 
+    };
+  });
+}
+
+// Get renewals due this month
+function getRenewalsDueThisMonth() {
+  return safeExecute('getRenewalsDueThisMonth', function() {
+    const trackingSheet = getOrCreateSheet('ติดตามการต่ออายุ');
+    const lastRow = trackingSheet.getLastRow();
+    
+    if (lastRow <= 1) {
+      // If no tracking records, check work orders directly
+      const workOrders = getWorkOrderList();
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      
+      const dueRenewals = workOrders
+        .filter(wo => {
+          if (!wo.endDate || wo.status === 'ยกเลิก') return false;
+          const endDate = new Date(wo.endDate);
+          return endDate >= today && endDate <= nextMonth;
+        })
+        .map(wo => {
+          // Auto-add to tracking
+          addRenewalTracking(wo.id);
+          
+          return {
+            workOrderId: wo.id,
+            customerId: wo.customerId,
+            customerName: wo.customerName,
+            insuranceType: wo.insuranceType,
+            expiryDate: wo.endDate,
+            status: RENEWAL_STATUS.PENDING,
+            policyNumber: wo.policyNumber
+          };
+        });
+      
+      return dueRenewals;
+    }
+    
+    // Get from tracking sheet
+    const values = trackingSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    const dueRenewals = values
+      .filter(row => {
+        const expiryDate = new Date(row[5]);
+        return expiryDate >= today && expiryDate <= nextMonth;
+      })
+      .map(row => ({
+        trackingId: String(row[0] || ''),
+        workOrderId: String(row[1] || ''),
+        customerId: String(row[2] || ''),
+        customerName: String(row[3] || ''),
+        insuranceType: String(row[4] || ''),
+        expiryDate: row[5] || '',
+        status: String(row[6] || ''),
+        notificationDate: row[7] || '',
+        renewalOrderDate: row[8] || '',
+        newPolicyNumber: String(row[9] || ''),
+        notes: String(row[10] || ''),
+        trackedBy: String(row[11] || '')
+      }));
+    
+    return dueRenewals;
+  });
 }
 
 // ==================== Utility Functions ====================
@@ -198,7 +968,7 @@ function searchWorkOrders(searchText) {
       return { success: true, data: [], count: 0 };
     }
     
-    const values = sheet.getRange(2, 1, lastRow - 1, 16).getValues();
+    const values = sheet.getRange(2, 1, lastRow - 1, 23).getValues();
     const searchLower = searchText.toLowerCase();
     
     console.log('Total rows to search:', values.length);
@@ -211,13 +981,15 @@ function searchWorkOrders(searchText) {
       const insuranceType = String(row[3] || '').toLowerCase();
       const details = String(row[5] || '').toLowerCase();
       const status = String(row[11] || '').toLowerCase();
+      const paymentStatus = String(row[16] || '').toLowerCase();
       
       const matches = workOrderId.includes(searchLower) || 
                      customerName.includes(searchLower) || 
                      policyNumber.includes(searchLower) ||
                      insuranceType.includes(searchLower) ||
                      details.includes(searchLower) ||
-                     status.includes(searchLower);
+                     status.includes(searchLower) ||
+                     paymentStatus.includes(searchLower);
       
       return matches;
     }).map(row => ({
@@ -236,7 +1008,14 @@ function searchWorkOrders(searchText) {
       createdDate: row[12] ? (row[12] instanceof Date ? row[12].toISOString().split('T')[0] : row[12]) : '',
       insuranceCompany: String(row[13] || ''),
       createdBy: String(row[14] || ''),
-      modifiedDate: row[15] ? (row[15] instanceof Date ? row[15].toISOString().split('T')[0] : row[15]) : ''
+      modifiedDate: row[15] ? (row[15] instanceof Date ? row[15].toISOString().split('T')[0] : row[15]) : '',
+      paymentStatus: String(row[16] || PAYMENT_STATUS.PENDING),
+      paymentType: String(row[17] || ''),
+      numberOfInstallments: row[18] || '',
+      totalPaid: parseFloat(row[19]) || 0,
+      remainingAmount: parseFloat(row[20]) || 0,
+      discount: parseFloat(row[21]) || 0,
+      actualAmount: parseFloat(row[22]) || parseFloat(row[7]) || 0
     }));
     
     console.log('Search found', results.length, 'matches');
@@ -844,7 +1623,7 @@ function getOrCreateWorkOrderItemsSheet() {
   return sheet;
 }
 
-// Enhanced saveWorkOrder function to support service type separation
+// Enhanced saveWorkOrder function with discount support
 function saveWorkOrder(data) {
   return safeExecute('saveWorkOrder', function() {
     if (!data || !data.customerId || !data.items || data.items.length === 0) {
@@ -875,14 +1654,18 @@ function saveWorkOrder(data) {
       totalSumInsured = data.items.reduce((sum, item) => sum + (parseFloat(item.sumInsured) || 0), 0);
     }
     
+    // คำนวณส่วนลดและยอดชำระจริง
+    const discount = parseFloat(data.discount) || 0;
+    const actualAmount = totalPremium - discount;
+    
     // Save main work order
     if (data.id) {
       // Update existing work order
-      updateMainWorkOrder(mainSheet, data, workOrderId, totalSumInsured, totalPremium, now, user);
+      updateMainWorkOrder(mainSheet, data, workOrderId, totalSumInsured, totalPremium, now, user, discount, actualAmount);
       deleteWorkOrderItems(workOrderId); // Delete old items from all sheets
     } else {
       // Add new work order
-      createMainWorkOrder(mainSheet, data, workOrderId, totalSumInsured, totalPremium, now, user);
+      createMainWorkOrder(mainSheet, data, workOrderId, totalSumInsured, totalPremium, now, user, discount, actualAmount);
     }
     
     // Save work order items to appropriate sheets based on service type
@@ -890,17 +1673,71 @@ function saveWorkOrder(data) {
       saveWorkOrderItemsByServiceType(workOrderId, data.items, data);
     }
     
+    // Create payment/installment plan if specified
+    if (data.paymentType && !data.id) { // Only for new work orders
+      if (data.paymentType === 'ผ่อนชำระ' && data.numberOfInstallments) {
+        const installmentData = {
+          workOrderId: workOrderId,
+          totalAmount: actualAmount, // ใช้ยอดหลังหักส่วนลด
+          numberOfInstallments: data.numberOfInstallments,
+          startDate: data.paymentStartDate || new Date(),
+          downPayment: data.downPayment || 0,
+          customDates: data.installmentDates || []
+        };
+        createInstallmentPlan(installmentData);
+      } else {
+        // ชำระเต็มจำนวน - บันทึกการชำระเลย
+        const paymentData = {
+          workOrderId: workOrderId,
+          amount: actualAmount,
+          paymentType: data.paymentType,
+          referenceNumber: data.paymentReference || '',
+          bank: data.bank || '',
+          notes: data.paymentNotes || ''
+        };
+        savePayment(paymentData);
+      }
+      
+      // Update payment type in work order
+      updateWorkOrderPaymentType(workOrderId, data.paymentType, data.numberOfInstallments);
+    }
+    
+    // Add renewal tracking for insurance items
+    const insuranceItems = data.items.filter(item => 
+      item.serviceType === 'ประกันภัย' || item.serviceType === 'พรบ'
+    );
+    if (insuranceItems.length > 0 && !data.id) {
+      addRenewalTracking(workOrderId);
+    }
+    
     // Add to history
     const action = data.id ? 'แก้ไขใบงาน' : 'สร้างใบงานใหม่';
     addHistory(action, `${action} ${workOrderId}`, 'ใบงาน', workOrderId);
     
-    return { success: true, message: 'บันทึกใบงานสำเร็จ รายการได้ถูกแยกบันทึกตามประเภทบริการ', workOrderId: workOrderId };
+    return { success: true, message: 'บันทึกใบงานสำเร็จ', workOrderId: workOrderId };
   });
 }
 
 // Function to save work order items to appropriate sheets based on service type
 function saveWorkOrderItemsByServiceType(workOrderId, items, workOrderData) {
   const itemsSheet = getOrCreateWorkOrderItemsSheet(); // Keep original items sheet for compatibility
+  
+  // Get chassis number from vehicle data
+  let chassisNumber = '';
+  if (workOrderData.vehicleId) {
+    try {
+      const vehicleSheet = getOrCreateSheet('รถ');
+      const vehicleData = vehicleSheet.getDataRange().getValues();
+      for (let i = 1; i < vehicleData.length; i++) {
+        if (vehicleData[i][0] === workOrderData.vehicleId) {
+          chassisNumber = String(vehicleData[i][7] || ''); // Column 7 is chassis number
+          break;
+        }
+      }
+    } catch (error) {
+      console.error('Error getting chassis number:', error);
+    }
+  }
   
   items.forEach((item, index) => {
     const itemId = workOrderId + '-' + String(index + 1).padStart(2, '0');
@@ -930,7 +1767,7 @@ function saveWorkOrderItemsByServiceType(workOrderId, items, workOrderData) {
       item.notes || ''
     ]);
     
-    // Save to service type specific sheet
+    // Save to service type specific sheet with chassis number
     saveToServiceTypeSheet(targetSheetName, {
       itemId: itemId,
       workOrderId: workOrderId,
@@ -939,7 +1776,8 @@ function saveWorkOrderItemsByServiceType(workOrderId, items, workOrderData) {
       serviceType: serviceType,
       item: item,
       workOrderData: workOrderData,
-      endDate: endDate
+      endDate: endDate,
+      chassisNumber: chassisNumber
     });
   });
 }
@@ -948,7 +1786,7 @@ function saveWorkOrderItemsByServiceType(workOrderId, items, workOrderData) {
 function saveToServiceTypeSheet(sheetName, data) {
   try {
     const sheet = getOrCreateSheet(sheetName);
-    const { itemId, workOrderId, customerId, customerName, serviceType, item, workOrderData, endDate } = data;
+    const { itemId, workOrderId, customerId, customerName, serviceType, item, workOrderData, endDate, chassisNumber } = data;
     
     switch (sheetName) {
       case 'ประกันภัย':
@@ -968,7 +1806,8 @@ function saveToServiceTypeSheet(sheetName, data) {
           item.insuranceCompany || '',      // บริษัทประกัน
           'ใช้งาน',                          // สถานะ
           new Date(),                       // วันที่สร้าง
-          item.notes || ''                  // หมายเหตุ
+          item.notes || '',                 // หมายเหตุ
+          chassisNumber || ''               // เลขตัวถัง
         ]);
         break;
         
@@ -986,7 +1825,8 @@ function saveToServiceTypeSheet(sheetName, data) {
           item.policyNumber || '',          // เลขที่อ้างอิง
           'ใช้งาน',                          // สถานะ
           new Date(),                       // วันที่สร้าง
-          item.notes || ''                  // หมายเหตุ
+          item.notes || '',                 // หมายเหตุ
+          chassisNumber || ''               // เลขตัวถัง
         ]);
         break;
         
@@ -1002,7 +1842,8 @@ function saveToServiceTypeSheet(sheetName, data) {
           item.startDate || new Date(),     // วันที่ให้บริการ
           'ใช้งาน',                          // สถานะ
           new Date(),                       // วันที่สร้าง
-          item.notes || ''                  // หมายเหตุ
+          item.notes || '',                 // หมายเหตุ
+          chassisNumber || ''               // เลขตัวถัง
         ]);
         break;
         
@@ -1018,25 +1859,33 @@ function saveToServiceTypeSheet(sheetName, data) {
           item.startDate || new Date(),     // วันที่
           'ใช้งาน',                          // สถานะ
           new Date(),                       // วันที่สร้าง
-          item.notes || ''                  // หมายเหตุ
+          item.notes || '',                 // หมายเหตุ
+          chassisNumber || ''               // เลขตัวถัง
         ]);
         break;
     }
     
-    console.log(`Saved item ${itemId} to ${sheetName} sheet`);
+    console.log(`Saved item ${itemId} to ${sheetName} sheet with chassis number: ${chassisNumber}`);
   } catch (error) {
     console.error(`Error saving to ${sheetName} sheet:`, error);
   }
 }
 
 // Enhanced helper functions for main work order operations
-function updateMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPremium, now, user) {
+function updateMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPremium, now, user, discount, actualAmount) {
   const dataRange = sheet.getDataRange();
   const values = dataRange.getValues();
   
   for (let i = 1; i < values.length; i++) {
     if (values[i][0] === data.id) {
-      sheet.getRange(i + 1, 1, 1, 16).setValues([[
+      // Keep existing payment information
+      const existingPaymentStatus = values[i][16] || PAYMENT_STATUS.PENDING;
+      const existingPaymentType = values[i][17] || '';
+      const existingInstallments = values[i][18] || '';
+      const existingTotalPaid = values[i][19] || 0;
+      const existingRemaining = actualAmount - existingTotalPaid;
+      
+      sheet.getRange(i + 1, 1, 1, 23).setValues([[
         workOrderId,
         data.customerId,
         data.customerName,
@@ -1052,14 +1901,21 @@ function updateMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPre
         values[i][12],
         '',
         values[i][14],
-        now
+        now,
+        existingPaymentStatus,
+        existingPaymentType,
+        existingInstallments,
+        existingTotalPaid,
+        existingRemaining,
+        discount,
+        actualAmount
       ]]);
       break;
     }
   }
 }
 
-function createMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPremium, now, user) {
+function createMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPremium, now, user, discount, actualAmount) {
   sheet.appendRow([
     workOrderId,
     data.customerId,
@@ -1076,7 +1932,14 @@ function createMainWorkOrder(sheet, data, workOrderId, totalSumInsured, totalPre
     now,
     '',
     user,
-    now
+    now,
+    PAYMENT_STATUS.PENDING, // สถานะการชำระเงิน
+    '', // ประเภทการชำระ
+    '', // จำนวนงวด
+    0, // ยอดชำระแล้ว
+    actualAmount, // ยอดค้างชำระ
+    discount, // ส่วนลด
+    actualAmount // ยอดชำระจริง
   ]);
 }
 
@@ -1179,7 +2042,7 @@ function getWorkOrderList() {
       return [];
     }
     
-    const values = sheet.getRange(2, 1, lastRow - 1, 16).getValues();
+    const values = sheet.getRange(2, 1, lastRow - 1, 23).getValues();
     console.log('Retrieved', values.length, 'work order rows');
     
     const workOrders = values.map(row => ({
@@ -1198,7 +2061,14 @@ function getWorkOrderList() {
       createdDate: row[12] ? (row[12] instanceof Date ? row[12].toISOString().split('T')[0] : row[12]) : '',
       insuranceCompany: String(row[13] || ''),
       createdBy: String(row[14] || ''),
-      modifiedDate: row[15] ? (row[15] instanceof Date ? row[15].toISOString().split('T')[0] : row[15]) : ''
+      modifiedDate: row[15] ? (row[15] instanceof Date ? row[15].toISOString().split('T')[0] : row[15]) : '',
+      paymentStatus: String(row[16] || PAYMENT_STATUS.PENDING),
+      paymentType: String(row[17] || ''),
+      numberOfInstallments: row[18] || '',
+      totalPaid: parseFloat(row[19]) || 0,
+      remainingAmount: parseFloat(row[20]) || parseFloat(row[7]) || 0,
+      discount: parseFloat(row[21]) || 0,
+      actualAmount: parseFloat(row[22]) || parseFloat(row[7]) || 0
     }));
     
     console.log('Processed', workOrders.length, 'work orders');
@@ -1221,6 +2091,17 @@ function cancelWorkOrder(workOrderId) {
         // Update status to cancelled
         sheet.getRange(i + 1, 12).setValue('ยกเลิก');
         sheet.getRange(i + 1, 16).setValue(new Date());
+        sheet.getRange(i + 1, 17).setValue(PAYMENT_STATUS.CANCELLED);
+        
+        // Cancel all pending installments
+        const installmentSheet = getOrCreateSheet('งวดการชำระ');
+        const installmentData = installmentSheet.getDataRange().getValues();
+        
+        for (let j = 1; j < installmentData.length; j++) {
+          if (installmentData[j][1] === workOrderId && installmentData[j][7] === 'รอชำระ') {
+            installmentSheet.getRange(j + 1, 8).setValue('ยกเลิก');
+          }
+        }
         
         // Add to history
         addHistory('ยกเลิกใบงาน', `ยกเลิกใบงาน ${workOrderId}`, 'ใบงาน', workOrderId);
@@ -1291,6 +2172,56 @@ function renewPolicy(workOrderId) {
   });
 }
 
+// Clone Work Order Function
+function cloneWorkOrder(workOrderId) {
+  return safeExecute('cloneWorkOrder', function() {
+    if (!workOrderId) {
+      throw new Error('ไม่พบรหัสใบงาน');
+    }
+    
+    const workOrders = getWorkOrderList();
+    const workOrder = workOrders.find(wo => wo.id === workOrderId);
+    
+    if (!workOrder) {
+      return { success: false, message: 'ไม่พบใบงาน' };
+    }
+    
+    // Get work order items
+    const items = getWorkOrderItems(workOrderId);
+    
+    if (items.length === 0) {
+      return { success: false, message: 'ไม่พบรายการในใบงาน' };
+    }
+    
+    // Clone items with cleared policy numbers and reset status
+    const clonedItems = items.map(item => ({
+      ...item,
+      policyNumber: '', // Clear policy number for new work order
+      status: 'รอดำเนินการ',
+      startDate: '', // Clear dates to be set manually
+      endDate: ''
+    }));
+    
+    // Create cloned work order
+    const clonedWorkOrderData = {
+      customerId: workOrder.customerId,
+      customerName: workOrder.customerName,
+      vehicleId: workOrder.propertyId,
+      items: clonedItems,
+      status: 'รอดำเนินการ'
+    };
+    
+    const result = saveWorkOrder(clonedWorkOrderData);
+    
+    if (result.success) {
+      // Add to history
+      addHistory('โคลนใบงาน', `โคลนจาก ${workOrderId} เป็น ${result.workOrderId}`, 'ใบงาน', result.workOrderId);
+    }
+    
+    return result;
+  });
+}
+
 // ==================== Service Type Functions ====================
 // Function to get items by service type
 function getItemsByServiceType(serviceType, limit = 100) {
@@ -1325,7 +2256,8 @@ function getItemsByServiceType(serviceType, limit = 100) {
         insuranceCompany: String(row[12] || ''),
         status: String(row[13] || ''),
         createdDate: row[14] || '',
-        notes: String(row[15] || '')
+        notes: String(row[15] || ''),
+        chassisNumber: String(row[16] || '')
       }));
     } else if (targetSheetName === 'ภาษี') {
       return values.map(row => ({
@@ -1341,7 +2273,8 @@ function getItemsByServiceType(serviceType, limit = 100) {
         referenceNumber: String(row[9] || ''),
         status: String(row[10] || ''),
         createdDate: row[11] || '',
-        notes: String(row[12] || '')
+        notes: String(row[12] || ''),
+        chassisNumber: String(row[13] || '')
       }));
     } else if (targetSheetName === 'ค่าบริการ') {
       return values.map(row => ({
@@ -1355,7 +2288,8 @@ function getItemsByServiceType(serviceType, limit = 100) {
         date: row[7] || '',
         status: String(row[8] || ''),
         createdDate: row[9] || '',
-        notes: String(row[10] || '')
+        notes: String(row[10] || ''),
+        chassisNumber: String(row[11] || '')
       }));
     } else { // อื่นๆ
       return values.map(row => ({
@@ -1369,7 +2303,8 @@ function getItemsByServiceType(serviceType, limit = 100) {
         date: row[7] || '',
         status: String(row[8] || ''),
         createdDate: row[9] || '',
-        notes: String(row[10] || '')
+        notes: String(row[10] || ''),
+        chassisNumber: String(row[11] || '')
       }));
     }
   }, []);
@@ -1435,12 +2370,7 @@ function getCompanyListWrapped() {
       };
     }
     
-    // ตรวจสอบว่ามี column อีเมลหรือไม่
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const emailColumnExists = headers.includes('อีเมล');
-    
-    const numColumns = emailColumnExists ? 7 : 6;
-    const values = sheet.getRange(2, 1, lastRow - 1, numColumns).getValues();
+    const values = sheet.getRange(2, 1, lastRow - 1, 7).getValues();
     
     const companies = values.map(row => ({
       id: String(row[0] || ''),
@@ -1449,7 +2379,7 @@ function getCompanyListWrapped() {
       phone: String(row[3] || ''),
       contact: String(row[4] || ''),
       status: String(row[5] || ''),
-      email: emailColumnExists ? String(row[6] || '') : '' // เพิ่ม email field ถ้ามี
+      email: String(row[6] || '')
     }));
     
     return {
@@ -1533,6 +2463,8 @@ function getDashboardData() {
     
     let expiringCount = 0;
     let totalRevenue = 0;
+    let pendingPayments = 0;
+    let overduePayments = 0;
     
     workOrders.forEach(wo => {
       if (wo.endDate && wo.status !== 'ยกเลิก') {
@@ -1543,7 +2475,25 @@ function getDashboardData() {
       }
       
       if (wo.status !== 'ยกเลิก') {
-        totalRevenue += parseFloat(wo.premium) || 0;
+        totalRevenue += wo.actualAmount || wo.premium || 0;
+        
+        // Count payment statuses
+        if (wo.paymentStatus === PAYMENT_STATUS.PENDING) {
+          pendingPayments++;
+        } else if (wo.paymentStatus === PAYMENT_STATUS.INSTALLMENT) {
+          // Check for overdue installments
+          const installments = getInstallmentPlan(wo.id);
+          const hasOverdue = installments.some(inst => {
+            if (inst.status !== 'ชำระแล้ว') {
+              const dueDate = new Date(inst.dueDate);
+              return dueDate < today;
+            }
+            return false;
+          });
+          if (hasOverdue) {
+            overduePayments++;
+          }
+        }
       }
     });
     
@@ -1551,13 +2501,17 @@ function getDashboardData() {
       totalCustomers: customersResult.count || 0,
       totalWorkOrders: workOrders.filter(wo => wo.status !== 'ยกเลิก').length,
       expiringPolicies: expiringCount,
-      totalRevenue: totalRevenue
+      totalRevenue: totalRevenue,
+      pendingPayments: pendingPayments,
+      overduePayments: overduePayments
     };
   }, {
     totalCustomers: 0,
     totalWorkOrders: 0,
     expiringPolicies: 0,
-    totalRevenue: 0
+    totalRevenue: 0,
+    pendingPayments: 0,
+    overduePayments: 0
   });
 }
 
@@ -1833,6 +2787,7 @@ function convertToHtml(text) {
   
   return html;
 }
+
 // ==================== SEARCH VEHICLES FUNCTION ====================
 function searchVehicles(searchText) {
   return safeExecute('searchVehicles', function() {
