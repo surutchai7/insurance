@@ -2564,6 +2564,13 @@
         });
       }
       
+      // Installment & Renewal refresh
+      const refInstBtn = document.getElementById('refresh-installment-btn');
+      if (refInstBtn) refInstBtn.addEventListener('click', loadInstallmentTracking);
+
+      const refReBtn = document.getElementById('refresh-renewal-btn');
+      if (refReBtn) refReBtn.addEventListener('click', loadRenewalTracking);
+      
       console.log('Event listeners setup complete');
     }
     
